@@ -1,0 +1,22 @@
+{
+    "name":"briareos/chat-bundle",
+    "type":"package",
+    "version":"dev-master",
+    "authors":[
+        {
+            "name":"Milos Colakovic",
+            "email":"gmefox@gmail.com"
+        }
+    ],
+    "require":{
+        "symfony/symfony":"2.1.x-dev",
+        "sensio/framework-extra-bundle":"2.1.x-dev",
+        "briareos/nodjes-bundle":"dev-master"
+    },
+    "autoload":{
+        "psr-0":{
+            "Briareos\\ChatBundle":""
+        }
+    },
+    "target-dir":"Briareos/ChatBundle"
+}

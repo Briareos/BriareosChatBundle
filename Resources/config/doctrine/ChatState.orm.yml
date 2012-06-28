@@ -1,0 +1,27 @@
+Briareos\ChatBundle\Entity\ChatState:
+    type: entity
+    table: chat__state
+    repositoryClass: ChatStateRepository
+    id:
+        subject:
+            associationKey: true
+    fields:
+        openConversations:
+            type: text
+    oneToOne:
+        subject:
+            targetEntity: ChatSubjectInterface
+            inversedBy: chatState
+            joinColumn:
+                name: subject_id
+                referencedColumnName: id
+                nullable: false
+                onDelete: CASCADE
+    manyToOne:
+        activeConversation:
+            targetEntity: ChatSubjectInterface
+            joinColumn:
+                name: active_id
+                referencedColumnName: id
+                onDelete: SET NULL
+    lifecycleCallbacks: {  }
