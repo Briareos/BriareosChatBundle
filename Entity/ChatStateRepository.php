@@ -4,6 +4,7 @@ namespace Briareos\ChatBundle\Entity;
 
 use Doctrine\ORM\EntityRepository;
 use Briareos\ChatBundle\Entity\ChatSubjectInterface;
+use Briareos\ChatBundle\Entity\ChatState;
 
 /**
  * ChatStateRepository
@@ -19,5 +20,20 @@ class ChatStateRepository extends EntityRepository
         $qb->where('FindInSet(:subject_id, s.openConversations)');
         $qb->setParameter(':subject_id', $subject->getId());
         return $qb->getQuery()->execute();
+    }
+
+    public function generateChatState(ChatSubjectInterface $subject)
+    {
+        $chatState = $this->findOneBy(array(
+            'subject' => $subject,
+        ));
+        if (null === $chatState) {
+            $chatState = new ChatState($subject);
+            /** @var $em \Doctrine\ORM\EntityManager */
+            $em = $this->getEntityManager();
+            $em->persist($chatState);
+            $em->flush($chatState);
+        }
+        return $chatState;
     }
 }

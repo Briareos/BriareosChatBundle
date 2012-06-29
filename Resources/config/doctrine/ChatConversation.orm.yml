@@ -10,8 +10,12 @@ Briareos\ChatBundle\Entity\ChatConversation:
                 strategy: AUTO
         lastMessageRead:
             type: integer
+            nullable: false
+            default: 0
         lastMessageCleared:
             type: integer
+            nullable: false
+            default: 0
     manyToOne:
         subject:
             targetEntity: ChatSubjectInterface

@@ -26,8 +26,9 @@ class ChatState
     private $activeConversation;
 
 
-    public function __construct()
+    public function __construct(ChatSubjectInterface $subject)
     {
+        $this->setSubject($subject);
         $this->setOpenConversations();
     }
 
@@ -127,5 +128,14 @@ class ChatState
     public function getActiveConversation()
     {
         return $this->activeConversation;
+    }
+
+    public function getActiveConversationId()
+    {
+        $activeConversation = $this->getActiveConversation();
+        if($activeConversation === null) {
+            return null;
+        }
+        return $activeConversation->getId();
     }
 }
