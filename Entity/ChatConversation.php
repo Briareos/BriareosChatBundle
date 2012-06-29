@@ -36,6 +36,12 @@ class ChatConversation
     private $partner;
 
 
+    public function __construct()
+    {
+        $this->setLastMessageRead(0);
+        $this->setLastMessageCleared(0);
+    }
+
     /**
      * Get id
      *

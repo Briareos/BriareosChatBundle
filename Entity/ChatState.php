@@ -58,7 +58,7 @@ class ChatState
         // We should do this step for proper JSON conversion that may occur.
         $openConversations = array_map('intval', $openConversations);
         array_shift($openConversations);
-        return $this->openConversations;
+        return $openConversations;
     }
 
     public function addOpenConversation($conversationNumber)

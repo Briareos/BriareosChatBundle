@@ -96,7 +96,8 @@ class ChatController extends ContainerAware
             'n' => $subject->getChatName(),
             'p' => 'http://loopj.com/images/facebook_32.png',
             'a' => $chatState->getActiveConversationId(),
-            'v' => $chatState->getOpenConversations(),
+            //'v' => $chatState->getOpenConversations(),
+            'v' => array(2),
             //'o' => $this->getPresentUsers($user),
             'o' => array(),
             /*
@@ -123,7 +124,7 @@ class ChatController extends ContainerAware
             'w' => array(),
         );
 
-        foreach($chatData['v'] as $openConversationId) {
+        foreach ($chatData['v'] as $openConversationId) {
             $chatData['w'][$openConversationId] = array(
                 'd' => array(),
                 'm' => array(),
@@ -134,7 +135,8 @@ class ChatController extends ContainerAware
         /** @var $messageRepository \App\NodejsBundle\Entity\ChatMessageRepository */
         $messageRepository = $em->getRepository('BriareosChatBundle:ChatMessage');
         $messages = $messageRepository->getSubjectMessages($subject);
-        foreach($messages as $message) {
+        var_dump($messages);die;
+        foreach ($messages as $message) {
             if (!isset($chatData['w'][$message->partner_id])) {
                 $chatData['w'][$message->partner_id] = array(
                     'd' => array(),
