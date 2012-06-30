@@ -8,6 +8,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Briareos\ChatBundle\Entity\ChatSubjectInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 class ChatController extends ContainerAware
 {
@@ -49,43 +50,44 @@ class ChatController extends ContainerAware
             throw new AccessDeniedException();
         }
 
-        /* {
-        * u : This user's uid
-        * n : This user's name
-        * p : This user's picture
-        * a : Active window ID
-        * v : Array of open window IDs
-        * o : List of online chat partners, indexed by uid
-        *  {
-        *   u : Partner's uid
-        *   n : Partner's name
-        *   p : Partner's picture
-        *   s : Partner's status
-        *  }
-        * w : Chat windows, indexed by uid
-        *  {
-        *   d : Partner's data
-        *    {
-        *     u : Partner's uid
+        /*{
+        * u : Subject's ID
+        * n : Subject's name
+        * p : Subject's picture
+        * a : Active conversation's ID
+        * v : Array of open conversation IDs
+        * o : List of chat partners, indexed by ID
+        *   {
+        *     u : Partner's ID
         *     n : Partner's name
         *     p : Partner's picture
         *     s : Partner's status
-        *    }
-        *   m : Messages, indexed by cmid
-        *    {
-        *     i : Message cmid
-        *     r : 1 if it's a received message, 0 otherwise
-        *     t : Message time (UNIX timestamp)
-        *     b : Message body
-        *    }
-        *   e : Number of new messages
-        *  }
+        *   }
+        * w : Chat conversations, indexed by ID
+        *   {
+        *   d : Partner's data
+        *     {
+        *       u : Partner's uid
+        *       n : Partner's name
+        *       p : Partner's picture
+        *       s : Partner's status
+        *     }
+        *   m : Messages, indexed by ID
+        *     {
+        *       i : Message ID
+        *       r : 1 if it's a received message, 0 otherwise
+        *       t : Message time (UNIX timestamp)
+        *       b : Message body
+        *     }
+        *     e : Number of new messages
+        *   }
         * }
         */
 
         /** @var $em \Doctrine\ORM\EntityManager */
         $em = $this->container->get('doctrine.orm.default_entity_manager');
 
+        $subjectRepository = $em->getRepository('BriareosChatBundle:ChatSubjectInterface');
         /** @var $stateRepository \Briareos\ChatBundle\Entity\ChatStateRepository */
         $stateRepository = $em->getRepository('BriareosChatBundle:ChatState');
         /** @var $chatState \Briareos\ChatBundle\Entity\ChatState */
@@ -96,31 +98,9 @@ class ChatController extends ContainerAware
             'n' => $subject->getChatName(),
             'p' => 'http://loopj.com/images/facebook_32.png',
             'a' => $chatState->getActiveConversationId(),
-            //'v' => $chatState->getOpenConversations(),
-            'v' => array(2),
+            'v' => $chatState->getOpenConversations(),
             //'o' => $this->getPresentUsers($user),
             'o' => array(),
-            /*
-            'w' => array(
-                21 => array(
-                    'd' => array(
-                        'u' => 21,
-                        'n' => "Foxy",
-                        'p' => 'http://loopj.com/images/facebook_32.png',
-                        's' => 1,
-                    ),
-                    'm' => array(
-                        1 => array(
-                            'i' => 1,
-                            'r' => 1,
-                            't' => time(),
-                            'b' => 'lorem ipsum nesto ' . rand(1, 1999),
-                        ),
-                    ),
-                    'e' => 1,
-                ),
-            ),
-            */
             'w' => array(),
         );
 
@@ -132,10 +112,9 @@ class ChatController extends ContainerAware
             );
         }
 
-        /** @var $messageRepository \App\NodejsBundle\Entity\ChatMessageRepository */
+        /** @var $messageRepository \Briareos\ChatBundle\Entity\ChatMessageRepository */
         $messageRepository = $em->getRepository('BriareosChatBundle:ChatMessage');
         $messages = $messageRepository->getSubjectMessages($subject);
-        var_dump($messages);die;
         foreach ($messages as $message) {
             if (!isset($chatData['w'][$message->partner_id])) {
                 $chatData['w'][$message->partner_id] = array(
@@ -155,5 +134,36 @@ class ChatController extends ContainerAware
                 $chatData['w'][$message->partner_id]['e']++;
             }
         }
+
+        foreach ($chatData['w'] as $partnerId => &$window) {
+            /* @TODO the partner resolving method should be refactored once a method to get repositories by interfaces
+             * defined in external bundles is properly implemented. For now, the method is get p
+             *
+             */
+            /** @var $partner ChatSubjectInterface */
+            $partner = $subjectRepository->find($partnerId);
+            $cacheKey = array_search($partnerId, $chatData['v']);
+            if ($cacheKey === false) {
+                $cache['v'][] = $partner->getId();
+            }
+            $window['d'] = array(
+                'u' => $partner->getId(),
+                'n' => $partner->getChatName(),
+                'p' => 'http://loopj.com/images/facebook_32.png',
+                's' => 1
+            );
+        }
+
+        $openConversations = $chatState->getOpenConversations();
+        $newConversations = array_diff($chatData['v'], $openConversations);
+        if (!empty($newConversations)) {
+            $newOpen = array_merge($openConversations, $newConversations);
+            $chatState->setOpenConversations($newOpen);
+            $em->flush($chatState);
+        }
+
+        $response = new Response(json_encode($chatData));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 }

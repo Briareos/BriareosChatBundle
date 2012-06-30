@@ -13,37 +13,21 @@ use Doctrine\ORM\Query\Expr;
  */
 class ChatMessageRepository extends EntityRepository
 {
-    public function getSubjectConversations(ChatSubjectInterface $subject)
+    public function getSubjectMessages(ChatSubjectInterface $subject)
     {
-        /** @var $em \Doctrine\ORM\EntityManager */
-        $em = $this->getEntityManager();
-        $connection = $em->getConnection();
+        $connection = $this->getEntityManager()->getConnection();
         /** @var $result \Doctrine\DBAL\Driver\Statement */
-        /*
-        $result = $connection->executeQuery('SELECT cm.id, u.id AS partner_id, cm.text, cm.createdAt,
-          (cm.sender_id = u.id) AS received,
-          ((cu.last_id < cm.id OR cu.last_id IS NULL) AND :user_id != cm.sender_id) AS new
-          FROM chat__message cm
-          LEFT JOIN user u ON IF(:user_id = cm.sender_id, u.id = cm.receiver_id, u.id = cm.sender_id)
-          LEFT JOIN chat__user cu ON cu.receiver_id = :user_id AND cu.sender_id = u.id
-          WHERE (cm.id > cu.clear_id OR cu.clear_id IS NULL)
-          AND (cm.receiver_id = :user_id OR cm.sender_id = :user_id)
-          ORDER BY cm.id ASC', array(
-            ':user_id' => $subject->getId(),
+        $result = $connection->executeQuery('SELECT message.id, state.subject_id AS partner_id, message.text, message.createdAt,
+          (message.sender_id = state.subject_id) AS received,
+          ((conversation.lastMessageRead < message.id) AND :subject_id != message.sender_id) AS new
+          FROM chat__message message
+          LEFT JOIN chat__state state ON IF(:subject_id = message.sender_id, state.subject_id = message.receiver_id, state.subject_id = message.sender_id)
+          LEFT JOIN chat__conversation conversation ON conversation.subject_id = :subject_id AND conversation.partner_id = state.subject_id
+          WHERE (message.id > conversation.lastMessageCleared)
+            AND (message.receiver_id = :subject_id OR message.sender_id = :subject_id)
+          ORDER BY message.id ASC', array(
+            ':subject_id' => $subject->getId(),
         ));
-        */
-        $qb = $this->createQueryBuilder('m');
-        $qb->from('BriareosChatBundle:ChatMessage', 'm', 'm.id');
-        $qb->leftJoin('BriareosChatBundle:ChatState', 's', Expr\Join::WITH, 'IF(:subject = m.subject, s.subject = m.receiver, s.subject = m.sender)');
-        $qb->leftJoin('BriareosChatBundle:ChatConversation', 'c', Expr\Join::WITH, 'c.partner = :subject AND c.subject = s.subject');
-        $qb->where('(m.id > c.lastMessageCleared OR m.sender = :subject)');
-        $qb->orderBy('m.id', 'ASC');
-        $qb->select('m', 's AS partner');
-        $qb->setParameter('subject', $subject);
-        return $qb->getQuery()->execute();
-
-        /** @var $stateRepository ChatStateRepository */
-        $stateRepository = $this->getEntityManager()->getRepository('BriareosChatBundle:ChatState');
-        $openConversations = $stateRepository->find($subject->getId());
+        return $result->fetchAll(\PDO::FETCH_CLASS);
     }
 }
