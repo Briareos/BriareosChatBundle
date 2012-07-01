@@ -2,11 +2,9 @@
 
 namespace Briareos\ChatBundle\Entity;
 
-use Symfony\Component\Security\Core\User\UserInterface;
+use Briareos\NodejsBundle\Entity\NodejsSubjectInterface;
 
-interface ChatSubjectInterface extends UserInterface
+interface ChatSubjectInterface extends NodejsSubjectInterface
 {
-    public function getId();
-
     public function getChatName();
 }

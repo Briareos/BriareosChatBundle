@@ -3,12 +3,19 @@
 namespace Briareos\ChatBundle\Controller;
 
 use Symfony\Component\DependencyInjection\ContainerAware;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Briareos\ChatBundle\Entity\ChatSubjectInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Response;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
+use Briareos\NodejsBundle\Nodejs\Message;
+use Briareos\NodejsBundle\Nodejs\DispatcherInterface;
+use Briareos\ChatBundle\Entity\ChatSubjectInterface;
+use Briareos\ChatBundle\Entity\ChatMessage;
+use Briareos\ChatBundle\Entity\ChatConversation;
+use Briareos\ChatBundle\Entity\ChatState;
 
 class ChatController extends ContainerAware
 {
@@ -21,7 +28,7 @@ class ChatController extends ContainerAware
      *
      * @see Symfony\Component\Security\Core\Authentication\Token\TokenInterface::getUser()
      */
-    public function getUser()
+    public function getSubject()
     {
         if (!$this->container->has('security.context')) {
             throw new \LogicException('The SecurityBundle is not registered in your application.');
@@ -39,12 +46,12 @@ class ChatController extends ContainerAware
     }
 
     /**
-     * @Route("chat/cache", name="chat_cache")
+     * @Route("/chat/cache", name="briareos_chat_cache")
      */
     public function cacheAction()
     {
         /** @var $subject ChatSubjectInterface */
-        $subject = $this->getUser();
+        $subject = $this->getSubject();
 
         if (!$subject instanceof ChatSubjectInterface) {
             throw new AccessDeniedException();
@@ -87,11 +94,12 @@ class ChatController extends ContainerAware
         /** @var $em \Doctrine\ORM\EntityManager */
         $em = $this->container->get('doctrine.orm.default_entity_manager');
 
-        $subjectRepository = $em->getRepository('BriareosChatBundle:ChatSubjectInterface');
+        /** @var $subjectRepository ChatSubjectRepositoryInterface */
+        $subjectRepository = $em->getRepository(get_class($subject));
         /** @var $stateRepository \Briareos\ChatBundle\Entity\ChatStateRepository */
         $stateRepository = $em->getRepository('BriareosChatBundle:ChatState');
         /** @var $chatState \Briareos\ChatBundle\Entity\ChatState */
-        $chatState = $stateRepository->generateChatState($subject);
+        $chatState = $stateRepository->getChatState($subject);
 
         $chatData = array(
             'u' => $subject->getId(),
@@ -99,8 +107,7 @@ class ChatController extends ContainerAware
             'p' => 'http://loopj.com/images/facebook_32.png',
             'a' => $chatState->getActiveConversationId(),
             'v' => $chatState->getOpenConversations(),
-            //'o' => $this->getPresentUsers($user),
-            'o' => array(),
+            'o' => $subjectRepository->getPresentSubjects($subject),
             'w' => array(),
         );
 
@@ -127,7 +134,7 @@ class ChatController extends ContainerAware
             $chatData['w'][$message->partner_id]['m'][$message->id] = array(
                 'i' => $message->id,
                 'r' => $message->received,
-                't' => strtotime($message->created),
+                't' => strtotime($message->createdAt),
                 'b' => $messageText
             );
             if ($message->new) {
@@ -136,10 +143,6 @@ class ChatController extends ContainerAware
         }
 
         foreach ($chatData['w'] as $partnerId => &$window) {
-            /* @TODO the partner resolving method should be refactored once a method to get repositories by interfaces
-             * defined in external bundles is properly implemented. For now, the method is get p
-             *
-             */
             /** @var $partner ChatSubjectInterface */
             $partner = $subjectRepository->find($partnerId);
             $cacheKey = array_search($partnerId, $chatData['v']);
@@ -165,5 +168,272 @@ class ChatController extends ContainerAware
         $response = new Response(json_encode($chatData));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
+    }
+
+    /**
+     * @Route("/chat/activate", name="briareos_chat_activate")
+     */
+    public function activateAction()
+    {
+        /** @var $subject ChatSubjectInterface */
+        $subject = $this->getSubject();
+
+        $partnerId = $this->container->get('request')->request->get('uid');
+
+        $tid = $this->container->get('request')->request->get('tid', '');
+
+        if (empty($tid) || !is_string($tid)) {
+            throw new HttpException(400, 'Parameter "tid" is required and must be a string.');
+        }
+
+        if (!$subject instanceof ChatSubjectInterface) {
+            throw new AccessDeniedException('User must be logged in to use chat.');
+        }
+
+        /** @var $em \Doctrine\ORM\EntityManager */
+        $em = $this->container->get('doctrine.orm.default_entity_manager');
+        /** @var $stateRepository \Briareos\ChatBundle\Entity\ChatStateRepository */
+        $stateRepository = $em->getRepository('BriareosChatBundle:ChatState');
+        $chatState = $stateRepository->getChatState($subject);
+
+        if ($partnerId) {
+            $subjectRepository = $em->getRepository(get_class($subject));
+            /** @var $partner ChatSubjectInterface */
+            $partner = $subjectRepository->find($partnerId);
+            if (!$partner instanceof ChatSubjectInterface || $subject->getId() === $partner->getId()) {
+                throw new HttpException(400, 'Invalid partner ID specified.');
+            }
+        } else {
+            $partner = null;
+        }
+
+        $chatState->setActiveConversation($partner);
+        if ($partner) {
+            $chatState->addOpenConversation($partner->getId());
+        }
+        $em->persist($chatState);
+        $em->flush($chatState);
+
+        if ($partner) {
+            /** @var $conversationRepository \Briareos\ChatBundle\Entity\ChatConversationRepository */
+            $conversationRepository = $em->getRepository('BriareosChatBundle:ChatConversation');
+            $chatConversation = $conversationRepository->getConversation($subject, $partner);
+            /** @var $messageRepository \Briareos\ChatBundle\Entity\ChatMessageRepository */
+            $messageRepository = $em->getRepository('BriareosChatBundle:ChatMessage');
+
+            $lastMessageFromThisPartner = $messageRepository->getLastMessageFromTo($partner, $subject);
+            if ($lastMessageFromThisPartner !== null) {
+                $chatConversation->setLastMessageRead($lastMessageFromThisPartner->getId());
+                $em->persist($chatConversation);
+                $em->flush($chatConversation);
+            }
+        }
+
+        /** @var $dispatcher DispatcherInterface */
+        $dispatcher = $this->container->get('nodejs.dispatcher');
+        $activateMessage = new Message('chat');
+        $activateMessage->setChannel('nodejs_user_' . $subject->getId());
+        if ($partner) {
+            $messageData = array(
+                'command' => 'activate',
+                'tid' => $tid,
+                'uid' => $partner->getId(),
+                'd' => array(
+                    'u' => $partner->getId(),
+                    'n' => $partner->getChatName(),
+                    'p' => 'http://loopj.com/images/facebook_32.png',
+                ),
+            );
+        } else {
+            $messageData = array(
+                'command' => 'activate',
+                'tid' => $tid,
+                'uid' => 0,
+            );
+        }
+        $activateMessage->setData($messageData);
+        $dispatcher->dispatch($activateMessage);
+
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
+     * @Route("/chat/close", name="briareos_chat_close")
+     */
+    public function closeAction()
+    {
+        /** @var $subject ChatSubjectInterface */
+        $subject = $this->getSubject();
+
+        $tid = $this->container->get('request')->request->get('tid', '');
+
+        if (empty($tid) || !is_string($tid)) {
+            throw new HttpException(400, 'Parameter "tid" is required and must be a string.');
+        }
+
+        if (!$subject instanceof ChatSubjectInterface) {
+            throw new AccessDeniedException();
+        }
+
+        /** @var $em \Doctrine\ORM\EntityManager */
+        $em = $this->container->get('doctrine.orm.default_entity_manager');
+        $connection = $em->getConnection();
+        /** @var $stateRepository \Briareos\ChatBundle\Entity\ChatStateRepository */
+        $stateRepository = $em->getRepository('BriareosChatBundle:ChatState');
+        $chatState = $stateRepository->getChatState($subject);
+
+        $subjectRepository = $em->getRepository(get_class($subject));
+
+        $partnerId = $this->container->get('request')->request->get('uid');
+        /** @var $partner ChatSubjectInterface */
+        $partner = $subjectRepository->find($partnerId);
+
+        if (!$partner || !$partner instanceof ChatSubjectInterface || $subject->getId() === $partner->getId()) {
+            throw new HttpException(400, 'Invalid partner ID specified.');
+        }
+
+        /** @var $result \Doctrine\DBAL\Driver\Statement */
+        $result = $connection->executeQuery('
+            SELECT message.id FROM chat__message message
+            WHERE (message.sender_id = :subject_id AND message.receiver_id = :partner_id) OR (message.receiver_id = :subject_id AND message.sender_id = :partner_id)
+            ORDER BY message.id DESC LIMIT 1
+            ', array(
+            ':subject_id' => $subject->getId(),
+            ':partner_id' => $partner->getId(),
+        ));
+        $lastMessageId = $result->fetchColumn();
+        if ($lastMessageId) {
+            $connection->executeUpdate('
+                UPDATE chat__conversation conversation
+                SET conversation.lastMessageCleared = :lastMessageCleared
+                WHERE conversation.subject_id = :subject_id AND conversation.partner_id = :partner_id
+                ', array(
+                ':lastMessageCleared' => $lastMessageId,
+                ':subject_id' => $subject->getId(),
+                ':partner_id' => $partner->getId(),
+            ));
+        }
+
+        /** @var $dispatcher DispatcherInterface */
+        $dispatcher = $this->container->get('nodejs.dispatcher');
+        $closeMessage = new Message('chat');
+        $closeMessage->setData(array(
+            'command' => 'close',
+            'tid' => $tid,
+            'uid' => $partner->getId(),
+        ));
+        $closeMessage->setChannel('nodejs_user_' . $subject->getId());
+        $dispatcher->dispatch($closeMessage);
+
+        /** @var $em \Doctrine\ORM\EntityManager */
+        if ($chatState->getActiveConversationId() && $chatState->getActiveConversationId() === $partner->getId()) {
+            $chatState->setActiveConversation(null);
+        }
+        $chatState->removeOpenConversation($partner->getId());
+        $em->flush($chatState);
+
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
+     * @Route("/chat/ping", name="briareos_chat_ping")
+     */
+    public function pingAction()
+    {
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
+     * @Route("/chat/send", name="briareos_chat_send")
+     */
+    public function sendAction()
+    {
+        /** @var $subject ChatSubjectInterface */
+        $subject = $this->getSubject();
+
+        $tid = $this->container->get('request')->request->get('tid', '');
+
+        if (empty($tid) || !is_string($tid)) {
+            throw new HttpException(400, 'Parameter "tid" is required and must be a string.');
+        }
+
+        if (!$subject instanceof ChatSubjectInterface) {
+            throw new AccessDeniedException();
+        }
+
+        /** @var $em \Doctrine\ORM\EntityManager */
+        $em = $this->container->get('doctrine.orm.default_entity_manager');
+        /** @var $stateRepository \Briareos\ChatBundle\Entity\ChatStateRepository */
+        $stateRepository = $em->getRepository('BriareosChatBundle:ChatState');
+        $subjectChatState = $stateRepository->getChatState($subject);
+
+        $subjectRepository = $em->getRepository(get_class($subject));
+
+        $partnerId = $this->container->get('request')->request->get('uid');
+        /** @var $partner ChatSubjectInterface */
+        $partner = $subjectRepository->find($partnerId);
+        $partnerChatState = $stateRepository->getChatState($partner);
+
+        if (!$partner || !$partner instanceof ChatSubjectInterface || $subject->getId() === $partner->getId()) {
+            throw new HttpException(400, 'Invalid partner ID specified.');
+        }
+
+        $messageText = $this->container->get('request')->request->get('message');
+
+        $message = new ChatMessage();
+        $message->setSender($subject);
+        $message->setReceiver($partner);
+        $message->setText($messageText);
+        $em->persist($message);
+
+        if ($subjectChatState->getActiveConversationId() && $partnerChatState->getActiveConversationId() === $subjectChatState->getActiveConversationId()) {
+            /** @var $conversationRepository \Briareos\ChatBundle\Entity\ChatConversationRepository */
+            $conversationRepository = $em->getRepository('BriareosChatBundle:ChatConversation');
+            $chatConversation = $conversationRepository->getConversation($subject, $partner);
+            $chatConversation->setLastMessageRead($message);
+            $em->persist($chatConversation);
+        }
+        $em->flush();
+
+        /** @var $dispatcher DispatcherInterface */
+        $dispatcher = $this->container->get('nodejs.dispatcher');
+
+        $messageData = array(
+            'command' => 'message',
+            'tid' => $tid,
+            'sender' => array(
+                'u' => $subject->getId(),
+                'n' => $subject->getChatName(),
+                'p' => 'http://loopj.com/images/facebook_32.png',
+            ),
+            'receiver' => array(
+                'u' => $partner->getId(),
+                'n' => $partner->getChatName(),
+                'p' => 'http://loopj.com/images/facebook_32.png',
+            ),
+            'message' => array(
+                'i' => (int)$message->getId(),
+                't' => $message->getCreatedAt()->getTimestamp(),
+                'b' => $message->getText(),
+            )
+        );
+
+        $nodejsMessageToSender = new Message('chat');
+        $nodejsMessageToSender->setData($messageData);
+        $nodejsMessageToSender->setChannel('nodejs_user_' . $subject->getId());
+        $dispatcher->dispatch($nodejsMessageToSender);
+
+        $nodejsMessageToReceiver = new Message('chat');
+        $nodejsMessageToReceiver->setData($messageData);
+        $nodejsMessageToReceiver->setChannel('nodejs_user_' . $partner->getId());
+        $dispatcher->dispatch($nodejsMessageToReceiver);
+
+        return new Response();
     }
 }

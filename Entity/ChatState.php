@@ -40,10 +40,13 @@ class ChatState
      */
     public function setOpenConversations(array $openConversations = array())
     {
-        $this->openConversations = array(0);
-        foreach ($openConversations as $openConversation) {
-            $this->addOpenConversation($openConversation);
+        foreach ($openConversations as $conversationNumber) {
+            if (!is_numeric($conversationNumber) || (is_numeric($conversationNumber) && ($conversationNumber <= 0))) {
+                throw new \Exception('Conversation number must be a number greater than zero.');
+            }
         }
+        array_unshift($openConversations, 0);
+        $this->openConversations = implode(',', $openConversations);
         return $this;
     }
 
@@ -64,9 +67,6 @@ class ChatState
     public function addOpenConversation($conversationNumber)
     {
         $openConversations = $this->getOpenConversations();
-        if (!is_numeric($conversationNumber) || (is_numeric($conversationNumber) && ($conversationNumber <= 0))) {
-            throw new \Exception('Conversation number must be a number greater than zero.');
-        }
         $key = array_search($conversationNumber, $openConversations);
         if ($key === false) {
             $openConversations[] = intval($conversationNumber);
@@ -133,7 +133,7 @@ class ChatState
     public function getActiveConversationId()
     {
         $activeConversation = $this->getActiveConversation();
-        if($activeConversation === null) {
+        if ($activeConversation === null) {
             return null;
         }
         return $activeConversation->getId();

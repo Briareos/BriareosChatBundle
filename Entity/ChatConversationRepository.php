@@ -12,4 +12,29 @@ use Doctrine\ORM\EntityRepository;
  */
 class ChatConversationRepository extends EntityRepository
 {
+    public function getConversation(ChatSubjectInterface $subject, ChatSubjectInterface $partner)
+    {
+        $em = $this->getEntityManager();
+        /** @var $conversation ChatConversation */
+        $conversation = $this->findOneBy(array(
+            'subject' => $subject,
+            'partner' => $partner,
+        ));
+
+        if ($conversation === null) {
+            $conversation = new ChatConversation();
+            $conversation->setSubject($subject);
+            $conversation->setPartner($partner);
+            $em->persist($conversation);
+
+            $reverseConversation = new ChatConversation();
+            $reverseConversation->setSubject($partner);
+            $reverseConversation->setPartner($subject);
+            $em->persist($reverseConversation);
+
+            $em->flush($conversation);
+            $em->flush($reverseConversation);
+        }
+        return $conversation;
+    }
 }

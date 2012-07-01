@@ -30,4 +30,23 @@ class ChatMessageRepository extends EntityRepository
         ));
         return $result->fetchAll(\PDO::FETCH_CLASS);
     }
+
+    /**
+     * @param ChatSubjectInterface $sender
+     * @param ChatSubjectInterface $receiver
+     * @return null|\App\NodejsBundle\Entity\ChatMessage
+     */
+    public function getLastMessageFromTo(ChatSubjectInterface $sender, ChatSubjectInterface $receiver)
+    {
+        $messages = $this->findBy(array(
+            'sender' => $sender,
+            'receiver' => $receiver,
+        ), array(
+            'id' => 'desc',
+        ), 1);
+        if (!empty($messages)) {
+            return $messages[0];
+        }
+        return null;
+    }
 }

@@ -36,10 +36,15 @@ class ChatMessage
     private $receiver;
 
 
+    public function __construct()
+    {
+        $this->setCreatedAt(new \DateTime());
+    }
+
     /**
      * Get id
      *
-     * @return integer 
+     * @return integer
      */
     public function getId()
     {
