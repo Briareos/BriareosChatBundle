@@ -9,7 +9,6 @@
             if (!message.data) {
                 return;
             }
-            console.log(message.data);
             // Each request made by the chat sends a randomly generated tab ID
             // (tid), unique to every tab, which is broadcast back in the socket
             // message. If those tid's match, it means the request originated from
