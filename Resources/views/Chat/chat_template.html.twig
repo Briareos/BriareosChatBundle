@@ -1,26 +1,29 @@
 {% macro chat() %}
 {% spaceless %}
-<div id="chat">
-  <div class="level-1 clearfix">
-    <div class="level-2 clearfix">
-      <div class="level-3 clearfix">
-        <div class="windows-wrapper-outer">
-          <div class="windows-wrapper-inner clearfix">
-            <div id="chat-windows" class="clearfix" data-chat="windows"></div>
-          </div>
-        </div>
-        <div id="chat-status" data-chat="status">
-          <a class="window-toggle">
-            <div class="name-wrapper-outer">
-              <div class="name-wrapper-inner clearfix">
-                <img class="icon" src="https://s-static.ak.facebook.com/rsrc.php/v1/y4/r/-PAXP-deijE.gif" alt="" width="1" height="1"><div class="name-wrapper"><span class="label">Chat <span class="count">(<strong class="count-number">loading...</strong>)</span></span>
-              </div>
+<div class="chat">
+    <div class="level-1 clearfix">
+        <div class="level-2 clearfix">
+            <div class="level-3 clearfix">
+                <div class="windows-wrapper-outer">
+                    <div class="windows-wrapper-inner clearfix">
+                        <div class="chat-windows clearfix" data-chat="windows"></div>
+                    </div>
+                </div>
+                <div class="chat-status" data-chat="placeholder">
+                    <a class="window-toggle">
+                        <div class="name-wrapper-outer">
+                            <div class="name-wrapper-inner clearfix">
+                                <img class="icon" src="https://s-static.ak.facebook.com/rsrc.php/v1/y4/r/-PAXP-deijE.gif" alt="" width="1" height="1" />
+                                <div class="name-wrapper">
+                                    <span class="chat-label">Chat <span class="count">(<strong class="count-number">loading...</strong>)</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
             </div>
-          </a>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 {% endspaceless %}
 {% endmacro %}
@@ -49,23 +52,25 @@
 
 {% macro status() %}
 {% spaceless %}
-<a class="window-toggle">
-    <div class="name-wrapper-outer">
-        <div class="name-wrapper-inner clearfix">
-            <img class="icon" src="https://s-static.ak.facebook.com/rsrc.php/v1/y4/r/-PAXP-deijE.gif" alt="" width="1" height="1" />
-            <div class="name-wrapper">
-                <span class="label">Chat <span class="count">(<strong class="count-number">${count}</strong>)</span></span>
+<div class="chat-status" data-chat="window" data-uid="status">
+    <a class="window-toggle" data-chat="toggle" data-uid="status">
+        <div class="name-wrapper-outer">
+            <div class="name-wrapper-inner clearfix">
+                <img class="icon" src="https://s-static.ak.facebook.com/rsrc.php/v1/y4/r/-PAXP-deijE.gif" alt="" width="1" height="1" />
+                <div class="name-wrapper">
+                    <span class="chat-label">Chat <span class="count">(<strong class="count-number">${count}</strong>)</span></span>
+                </div>
             </div>
         </div>
-    </div>
-</a>
-<div class="panel">
-    <div class="title-wrapper clearfix minimize">
-        <div class="title minimize">Chat</div>
-    </div>
-    <div class="body">
-        <div id="chat-users">
-            <div id="chat-empty"></div>${users}</div>
+    </a>
+    <div class="panel" data-chat="panel" data-uid="status">
+        <div class="title-wrapper clearfix" data-chat="minimize" data-uid="status">
+            <div class="title" data-chat="minimize" data-uid="status">Chat</div>
+        </div>
+        <div class="body">
+            <div class="chat-users">
+                <div class="chat-empty"></div>${users}</div>
+        </div>
     </div>
 </div>
 {% endspaceless %}
@@ -73,7 +78,7 @@
 
 {% macro user() %}
 {% spaceless %}
-<a class="user clearfix chat-user" data-name="${name}" data-picture="${picture}" title="${name}" data-uid="${uid}">
+<a class="user chat-user clearfix" title="${name}" data-chat="user" data-uid="${uid}" data-name="${name}" data-picture="${picture}">
     <img src="${picture}" />
     <span>${name}</span>
 </a>
@@ -84,7 +89,6 @@
 {% spaceless %}
 <div class="window" data-chat="window" data-uid="${uid}">
     <a class="window-toggle" data-chat="toggle" data-uid="${uid}">
-
         <div class="name-wrapper-outer">
             <div class="name-wrapper-inner clearfix">
                 <div class="name-wrapper">
@@ -94,7 +98,7 @@
                 </div>
                 <div class="close-container">
                     <label class="close" data-chat="close" data-uid="${uid}" for="chat-uid-${uid}">
-                        <input title="Close" type="button" id="chat-uid-${uid}" />
+                        <input title="Close" type="button" />
                     </label>
                 </div>
             </div>
@@ -102,7 +106,6 @@
     </a>
     <div class="panel" data-chat="panel" data-uid="${uid}">
         <div class="title-wrapper" data-chat="minimize" data-uid="${uid}">
-
             <div class="title-wrapper-outer">
                 <div class="title-wrapper-inner" data-chat="minimize" data-uid="${uid}">
                     <a class="title-text" href="${uri}">${name}</a>
@@ -115,7 +118,7 @@
             </div>
         </div>
         <div class="message-input">
-            <textarea class="message-text" data-chat="input" data-uid="${uid}"></textarea>
+            <textarea class="message-text" data-chat="input" data-uid="${uid}" data-name="${name}" data-picture="${picture}"></textarea>
             <span></span>
         </div>
     </div>

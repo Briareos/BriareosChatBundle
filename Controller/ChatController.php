@@ -12,6 +12,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Briareos\NodejsBundle\Nodejs\Message;
 use Briareos\NodejsBundle\Nodejs\DispatcherInterface;
+use Briareos\NodejsBundle\Entity\NodejsPresence;
 use Briareos\ChatBundle\Entity\ChatSubjectInterface;
 use Briareos\ChatBundle\Entity\ChatMessage;
 use Briareos\ChatBundle\Entity\ChatConversation;
@@ -19,34 +20,47 @@ use Briareos\ChatBundle\Entity\ChatState;
 
 class ChatController extends ContainerAware
 {
-    /**
-     * Get a user from the Security Context
-     *
-     * @return mixed
-     *
-     * @throws \LogicException If SecurityBundle is not available
-     *
-     * @see Symfony\Component\Security\Core\Authentication\Token\TokenInterface::getUser()
-     */
+    public function getPicture(ChatSubjectInterface $subject)
+    {
+        return sprintf('//www.gravatar.com/avatar/%s?s=32', md5(strtolower(trim($subject->getEmail()))));
+    }
+
     public function getSubject()
     {
-        if (!$this->container->has('security.context')) {
-            throw new \LogicException('The SecurityBundle is not registered in your application.');
+        /** @var $em \Doctrine\ORM\EntityManager */
+        $em = $this->container->get('doctrine.orm.default_entity_manager');
+        $presenceRepository = $em->getRepository('BriareosNodejsBundle:NodejsPresence');
+        $presence = $presenceRepository->findOneBy(array(
+            'authToken' => $this->getAuthToken(),
+        ));
+        if ($presence instanceof NodejsPresence) {
+            /** @var $presence NodejsPresence */
+            return $presence->getSubject();
         }
+        return null;
+    }
 
-        if (null === $token = $this->container->get('security.context')->getToken()) {
-            return null;
+    private function getAuthToken()
+    {
+        $request = $this->container->get('request');
+        $authToken = $request->request->get('token');
+        if (!is_scalar($authToken) || empty($authToken)) {
+            throw new HttpException(400, 'AuthToken must be specified.');
         }
+        return $authToken;
+    }
 
-        if (!is_object($user = $token->getUser())) {
-            return null;
-        }
-
-        return $user;
+    private function getNodejsCallback(ChatSubjectInterface $subject)
+    {
+        return 'chat_' . $subject->getId();
     }
 
     /**
      * @Route("/chat/cache", name="briareos_chat_cache")
+     *
+     * @return Response
+     *
+     * @throws AccessDeniedException
      */
     public function cacheAction()
     {
@@ -94,7 +108,7 @@ class ChatController extends ContainerAware
         /** @var $em \Doctrine\ORM\EntityManager */
         $em = $this->container->get('doctrine.orm.default_entity_manager');
 
-        /** @var $subjectRepository ChatSubjectRepositoryInterface */
+        /** @var $subjectRepository \Briareos\ChatBundle\Entity\ChatSubjectRepositoryInterface */
         $subjectRepository = $em->getRepository(get_class($subject));
         /** @var $stateRepository \Briareos\ChatBundle\Entity\ChatStateRepository */
         $stateRepository = $em->getRepository('BriareosChatBundle:ChatState');
@@ -104,10 +118,10 @@ class ChatController extends ContainerAware
         $chatData = array(
             'u' => $subject->getId(),
             'n' => $subject->getChatName(),
-            'p' => 'http://loopj.com/images/facebook_32.png',
+            'p' => $this->getPicture($subject),
             'a' => $chatState->getActiveConversationId(),
             'v' => $chatState->getOpenConversations(),
-            'o' => $subjectRepository->getPresentSubjects($subject),
+            'o' => $this->generatePresentSubjects($subjectRepository->getPresentSubjects($subject)),
             'w' => array(),
         );
 
@@ -127,13 +141,13 @@ class ChatController extends ContainerAware
                 $chatData['w'][$message->partner_id] = array(
                     'd' => array(),
                     'm' => array(),
-                    'e' => 0
+                    'e' => 0,
                 );
             }
             $messageText = $message->text;
             $chatData['w'][$message->partner_id]['m'][$message->id] = array(
-                'i' => $message->id,
-                'r' => $message->received,
+                'i' => (int)$message->id,
+                'r' => (bool)$message->received,
                 't' => strtotime($message->createdAt),
                 'b' => $messageText
             );
@@ -152,7 +166,7 @@ class ChatController extends ContainerAware
             $window['d'] = array(
                 'u' => $partner->getId(),
                 'n' => $partner->getChatName(),
-                'p' => 'http://loopj.com/images/facebook_32.png',
+                'p' => $this->getPicture($partner),
                 's' => 1
             );
         }
@@ -172,6 +186,11 @@ class ChatController extends ContainerAware
 
     /**
      * @Route("/chat/activate", name="briareos_chat_activate")
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
     public function activateAction()
     {
@@ -221,6 +240,7 @@ class ChatController extends ContainerAware
             /** @var $messageRepository \Briareos\ChatBundle\Entity\ChatMessageRepository */
             $messageRepository = $em->getRepository('BriareosChatBundle:ChatMessage');
 
+            /** @var $lastMessageFromThisPartner ChatMessage */
             $lastMessageFromThisPartner = $messageRepository->getLastMessageFromTo($partner, $subject);
             if ($lastMessageFromThisPartner !== null) {
                 $chatConversation->setLastMessageRead($lastMessageFromThisPartner->getId());
@@ -231,8 +251,8 @@ class ChatController extends ContainerAware
 
         /** @var $dispatcher DispatcherInterface */
         $dispatcher = $this->container->get('nodejs.dispatcher');
-        $activateMessage = new Message('chat');
-        $activateMessage->setChannel('nodejs_user_' . $subject->getId());
+        $activateMessage = new Message($this->getNodejsCallback($subject));
+        $activateMessage->setChannel('user_' . $subject->getId());
         if ($partner) {
             $messageData = array(
                 'command' => 'activate',
@@ -241,7 +261,7 @@ class ChatController extends ContainerAware
                 'd' => array(
                     'u' => $partner->getId(),
                     'n' => $partner->getChatName(),
-                    'p' => 'http://loopj.com/images/facebook_32.png',
+                    'p' => $this->getPicture($subject),
                 ),
             );
         } else {
@@ -261,6 +281,11 @@ class ChatController extends ContainerAware
 
     /**
      * @Route("/chat/close", name="briareos_chat_close")
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
     public function closeAction()
     {
@@ -318,13 +343,13 @@ class ChatController extends ContainerAware
 
         /** @var $dispatcher DispatcherInterface */
         $dispatcher = $this->container->get('nodejs.dispatcher');
-        $closeMessage = new Message('chat');
+        $closeMessage = new Message($this->getNodejsCallback($subject));
         $closeMessage->setData(array(
             'command' => 'close',
             'tid' => $tid,
             'uid' => $partner->getId(),
         ));
-        $closeMessage->setChannel('nodejs_user_' . $subject->getId());
+        $closeMessage->setChannel('user_' . $subject->getId());
         $dispatcher->dispatch($closeMessage);
 
         /** @var $em \Doctrine\ORM\EntityManager */
@@ -341,6 +366,8 @@ class ChatController extends ContainerAware
 
     /**
      * @Route("/chat/ping", name="briareos_chat_ping")
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function pingAction()
     {
@@ -351,6 +378,11 @@ class ChatController extends ContainerAware
 
     /**
      * @Route("/chat/send", name="briareos_chat_send")
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
     public function sendAction()
     {
@@ -396,7 +428,7 @@ class ChatController extends ContainerAware
             /** @var $conversationRepository \Briareos\ChatBundle\Entity\ChatConversationRepository */
             $conversationRepository = $em->getRepository('BriareosChatBundle:ChatConversation');
             $chatConversation = $conversationRepository->getConversation($subject, $partner);
-            $chatConversation->setLastMessageRead($message);
+            $chatConversation->setLastMessageRead($message->getId());
             $em->persist($chatConversation);
         }
         $em->flush();
@@ -410,30 +442,45 @@ class ChatController extends ContainerAware
             'sender' => array(
                 'u' => $subject->getId(),
                 'n' => $subject->getChatName(),
-                'p' => 'http://loopj.com/images/facebook_32.png',
+                'p' => $this->getPicture($subject),
             ),
             'receiver' => array(
                 'u' => $partner->getId(),
                 'n' => $partner->getChatName(),
-                'p' => 'http://loopj.com/images/facebook_32.png',
+                'p' => $this->getPicture($partner),
             ),
             'message' => array(
                 'i' => (int)$message->getId(),
                 't' => $message->getCreatedAt()->getTimestamp(),
                 'b' => $message->getText(),
-            )
+            ),
         );
 
-        $nodejsMessageToSender = new Message('chat');
+        $nodejsMessageToSender = new Message($this->getNodejsCallback($subject));
         $nodejsMessageToSender->setData($messageData);
-        $nodejsMessageToSender->setChannel('nodejs_user_' . $subject->getId());
+        $nodejsMessageToSender->setChannel('user_' . $subject->getId());
         $dispatcher->dispatch($nodejsMessageToSender);
 
-        $nodejsMessageToReceiver = new Message('chat');
+        $nodejsMessageToReceiver = new Message($this->getNodejsCallback($partner));
         $nodejsMessageToReceiver->setData($messageData);
-        $nodejsMessageToReceiver->setChannel('nodejs_user_' . $partner->getId());
+        $nodejsMessageToReceiver->setChannel('user_' . $partner->getId());
         $dispatcher->dispatch($nodejsMessageToReceiver);
 
         return new Response();
+    }
+
+    public function generatePresentSubjects(array $subjects)
+    {
+        $presence = array();
+        /** @var $subject ChatSubjectInterface */
+        foreach ($subjects as $subject) {
+            $presence[$subject->getId()] = array(
+                'u' => $subject->getId(),
+                'n' => $subject->getChatName(),
+                'p' => $this->getPicture($subject),
+                's' => 1,
+            );
+        }
+        return $presence;
     }
 }

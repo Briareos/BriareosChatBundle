@@ -4,7 +4,9 @@
 <script type="text/javascript" src="{{ asset('bundles/briareoschat/js/chat.js') }}"></script>
 <script type="text/javascript">
     jQuery(document).ready(function ($) {
-        Chat.initialize({
+        var LocalChat = new Chat({
+            container:'body',
+            nodejs:window.Nodejs,
             tpl:{
                 status:'{{ chat.status() }}',
                 user:'{{ chat.user() }}',
@@ -13,12 +15,14 @@
                 messages:'{{ chat.messages() }}',
                 chat:'{{ chat.chat() }}'
             },
-            enabled:true,
-            cacheUrl:'{{ path('briareos_chat_cache') }}',
-            activateUrl:'{{ path('briareos_chat_activate') }}',
-            closeUrl:'{{ path('briareos_chat_close') }}',
-            sendUrl:'{{ path('briareos_chat_send') }}',
-            pingUrl:'{{ path('briareos_chat_ping') }}'
+            url:{
+                cache:'{{ path('briareos_chat_cache') }}',
+                activate:'{{ path('briareos_chat_activate') }}',
+                close:'{{ path('briareos_chat_close') }}',
+                send:'{{ path('briareos_chat_send') }}',
+                ping:'{{ path('briareos_chat_ping') }}'
+            }
         });
+        LocalChat.initialize();
     });
 </script>

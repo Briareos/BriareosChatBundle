@@ -1,4 +1,4 @@
-#chat {
+.chat {
 	position: fixed;
 	left: auto;
 	right: 0;
@@ -11,21 +11,21 @@
 	line-height: 17px;
 }
 
-#chat .clearfix:after {
+.chat .clearfix:after {
 	font-size: 0;
 }
 
-#chat a:hover {
+.chat a:hover {
 	text-decoration: none;
 }
 
-#chat .level-1 {
+.chat .level-1 {
 	background: none;
 	border: 0 none;
 	margin: 0 15px;
 }
 
-#chat .level-2 {
+.chat .level-2 {
 	background: #F4F4F4 url(../images/bg.png) 0 0 repeat-x;
 	border-color: #999;
 	border-style: solid;
@@ -33,54 +33,54 @@
 	float: right;
 }
 
-#chat .level-3 {
+.chat .level-3 {
 	float: left;
 	position: relative;
 }
 
-#chat .windows-wrapper-outer {
+.chat .windows-wrapper-outer {
 	float: left;
 	position: relative;
 }
 
-#chat .windows-wrapper-inner {
+.chat .windows-wrapper-inner {
 	height: 25px;
 	float: left;
 	position: relative;
 }
 
-#chat-windows {
+.chat-windows {
 	min-height: 1px;
 	position: static;
 	float: left;
 }
 
-#chat .window {
+.chat .window {
 	float: left;
 	position: relative;
 	top: -1px;
 	width: 150px;
 }
 
-#chat-windows .window.new-messages {
+.chat-windows .window.new-messages {
 	z-index: 101;
 }
 
-#chat-windows .new-messages .window-toggle {
+.chat-windows .new-messages .window-toggle {
 	background: #6D84B4 url(../images/highlight.png) repeat-x !important;
 	border-color: #283B8A;
 	color: white;
 }
 
-#chat-windows .new-messages .name-wrapper-wrapper {
+.chat-windows .new-messages .name-wrapper-wrapper {
 	background-image: url(../images/highlight-circle.png);
 }
 
-#chat-windows .new-messages .name-wrapper-name {
+.chat-windows .new-messages .name-wrapper-name {
 	color: #fff;
 }
 
-#chat .window-toggle {
+.chat .window-toggle {
 	cursor: pointer;
 	border-color: #999;
 	border-style: solid;
@@ -93,11 +93,11 @@
 	z-index: 1;
 }
 
-#chat .window-toggle:hover {
+.chat .window-toggle:hover {
 	background: #fff;
 }
 
-#chat .active .window-toggle {
+.chat .active .window-toggle {
 	background: white;
 	border-color: #777;
 	border-right-width: 1px;
@@ -106,37 +106,37 @@
 	padding: 5px;
 }
 
-#chat .active .name-wrapper-outer {
+.chat .active .name-wrapper-outer {
 	border-top: 1px solid #CCC;
 	margin-top: -5px;
 	padding-top: 4px;
 	position: relative;
 }
 
-#chat .name-wrapper-inner {
+.chat .name-wrapper-inner {
 	padding-top: 1px;
 }
 
-#chat .name-wrapper {
+.chat .name-wrapper {
 	float: left;
 }
 
-#chat-windows .name-wrapper-wrapper {
+.chat-windows .name-wrapper-wrapper {
 	background-image: url(../images/status-offline.png);
 	background-repeat: no-repeat;
 	background-position: right center;
 	padding-right: 11px;
 }
 
-#chat-windows .status-1 .name-wrapper-wrapper {
+.chat-windows .status-1 .name-wrapper-wrapper {
 	background-image: url(../images/status-online.png);
 }
 
-#chat-windows .status-2 .name-wrapper-wrapper {
+.chat-windows .status-2 .name-wrapper-wrapper {
 	background-image: url(../images/status-away.png);
 }
 
-#chat .name-wrapper-name {
+.chat .name-wrapper-name {
 	color: #333;
 	font-weight: bold;
 	overflow: hidden;
@@ -145,15 +145,15 @@
 	max-width: 125px;
 }
 
-#chat .window-toggle:hover .name-wrapper-name,#chat .active .name-wrapper-name {
+.chat .window-toggle:hover .name-wrapper-name,.chat .active .name-wrapper-name {
 	max-width: 108px;
 }
 
-#chat .new-messages .window-toggle:hover .name-wrapper-name {
+.chat .new-messages .window-toggle:hover .name-wrapper-name {
 	max-width: 125px;
 }
 
-#chat .close-container {
+.chat .close-container {
 	float: right;
 	display: none;
 	color: #333;
@@ -161,15 +161,15 @@
 	display: none;
 }
 
-#chat .window-toggle:hover .close-container,#chat .active .close-container {
+.chat .window-toggle:hover .close-container,.chat .active .close-container {
 	display: block;
 }
 
-#chat .new-messages .window-toggle:hover .close-container {
+.chat .new-messages .window-toggle:hover .close-container {
 	display: none;
 }
 
-#chat .close {
+.chat .close {
 	outline: none;
 	vertical-align: top;
 	overflow: hidden;
@@ -182,11 +182,11 @@
 	cursor: pointer;
 }
 
-#chat .close:hover,#chat .close:focus {
+.chat .close:hover,.chat .close:focus {
 	background-position: left -30px;
 }
 
-#chat .close input {
+.chat .close input {
 	cursor: pointer;
 	opacity: 0;
 	outline: none;
@@ -196,14 +196,14 @@
 	outline: none;
 }
 
-#chat-status {
+.chat-status {
 	float: left;
 	position: relative;
 	top: -1px;
 	width: 201px;
 }
 
-#chat-status .icon {
+.chat-status .icon {
 	background-image: url(../images/chat-online.gif);
 	background-repeat: no-repeat;
 	background-position: 0 0;
@@ -213,20 +213,20 @@
 	width: 16px;
 }
 
-#chat-status .label {
+.chat-status .chat-label {
 	color: #333;
 	font-weight: bold;
 }
 
-#chat-status .label .count {
+.chat-status .chat-label .count {
 	color: #777;
 }
 
-#chat-status .label .count .count-number {
+.chat-status .chat-label .count .count-number {
 	color: #333;
 }
 
-#chat .panel {
+.chat .panel {
 	display: none;
 	left: auto;
 	right: -1px;
@@ -241,19 +241,19 @@
 	width: 260px;
 }
 
-#chat-status .panel {
+.chat-status .panel {
 	width: 202px;
 }
 
-#chat .title {
+.chat .title {
 	display: block;
 }
 
-#chat a.title-text:hover {
+.chat a.title-text:hover {
 	text-decoration: underline;
 }
 
-#chat .title-wrapper {
+.chat .title-wrapper {
 	background-color: #6D84B4;
 	border: 1px solid #254588;
 	border-bottom: 0;
@@ -265,11 +265,11 @@
 	padding: 3px 3px 3px 5px;
 }
 
-#chat .title-wrapper:hover {
+.chat .title-wrapper:hover {
 	background-color: #627BAE;
 }
 
-#chat .title-wrapper-inner {
+.chat .title-wrapper-inner {
 	max-width: 250px;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -277,14 +277,14 @@
 	white-space: nowrap;
 }
 
-#chat .title-text {
+.chat .title-text {
 	color: #fff;
 	font-size: 11px;
 	font-weight: bold;
 	line-height: 14px;
 }
 
-#chat .body {
+.chat .body {
 	overflow-x: hidden;
 	overflow-y: auto;
 	position: relative;
@@ -295,16 +295,16 @@
 	height: 300px;
 }
 
-#chat .conversation-container {
+.chat .conversation-container {
 	
 }
 
-#chat .conversation {
+.chat .conversation {
 	margin-top: 5px;
 	margin-bottom: 5px;
 }
 
-#chat .message-input {
+.chat .message-input {
 	position: relative;
 	border-color: #777;
 	border-top: 1px solid #93A2C1;
@@ -312,7 +312,7 @@
 	border-width: 1px 1px 0;
 }
 
-#chat .message-text {
+.chat .message-text {
 	border: 0 none;
 	display: block;
 	height: 0;
@@ -330,7 +330,7 @@
 	line-height: 14px;
 }
 
-#chat .message-input span {
+.chat .message-input span {
 	left: 0;
 	position: absolute;
 	top: 0;
@@ -340,11 +340,11 @@
 	display: inline-block;
 }
 
-#chat-users {
+.chat-users {
 	
 }
 
-#chat-users .user {
+.chat-users .user {
 	display: block;
     cursor: pointer;
     color: #3b5998;
@@ -353,14 +353,14 @@
 	padding: 2px 20px 2px 10px;
 }
 
-#chat-users .user img {
+.chat-users .user img {
 	float: left;
 	height: 22px;
 	margin-right: 5px;
 	width: 22px;
 }
 
-#chat-users .user span {
+.chat-users .user span {
 	display: block;
 	line-height: 22px;
 	overflow: hidden;
@@ -368,7 +368,7 @@
 	white-space: nowrap;
 }
 
-#chat-users .user:hover {
+.chat-users .user:hover {
 	background-color: #6D84B4 !important;
 	background-position: right -52px;
 	border-top: 1px solid #3B5998;
@@ -379,7 +379,7 @@
 	text-decoration: none;
 }
 
-#chat .messages-container {
+.chat .messages-container {
 	border-top: 1px solid #EEE;
 	position: relative;
 	margin-left: 5px;
@@ -388,26 +388,26 @@
 	padding-top: 5px;
 }
 
-#chat .messages-container:hover .message-info {
+.chat .messages-container:hover .message-info {
 	visibility: visible;
 }
 
-#chat .profile-link {
+.chat .profile-link {
 	display: block;
 	float: left;
 }
 
-#chat .profile-link,#chat .profile-link img {
+.chat .profile-link,.chat .profile-link img {
 	width: 32px;
 	height: 32px;
 	border: 0;
 }
 
-#chat .chat-messages {
+.chat .chat-messages {
 	margin-left: 40px;
 }
 
-#chat .message-info {
+.chat .message-info {
 	background-color: white;
 	position: absolute;
 	right: 0;
@@ -418,7 +418,7 @@
 	line-height: 11px;
 }
 
-#chat .chat-message {
+.chat .chat-message {
 	margin-bottom: 3px;
 	white-space: pre-wrap;
 	word-wrap: break-word;
