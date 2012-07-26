@@ -1,8 +1,8 @@
 parameters:
-    chat.subject_pre_remove_listener.class: Briareos\ChatBundle\Listener\ChatSubjectRemoveListener
+    chat_subject.listener.class: Briareos\ChatBundle\Listener\ChatSubjectRemoveListener
 
 services:
-    user.listener:
-        class: %chat.subject_pre_remove_listener.class%
+    chat_subject.listener:
+        class: %chat_subject.listener.class%
         tags:
             - { name: doctrine.event_listener, event: preRemove }
