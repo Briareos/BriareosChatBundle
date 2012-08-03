@@ -42,6 +42,8 @@
                     chat.remoteDeactivateWindow(uid);
                 } else {
                     // User window has been activated.
+                    // Deactivate the old window.
+                    chat.localDeactivateWindow(chat.data.a);
                     chat.data.a = uid;
                     chat.localActivateWindow(uid);
                     chat.remoteActivateWindow(uid);
@@ -71,8 +73,12 @@
                 chat.data.v.push(uid);
                 chat.localCreateWindow(partner);
             }
-            chat.localActivateWindow(uid);
-            chat.remoteActivateWindow(uid);
+            if (chat.data.a !== uid) {
+                chat.localDeactivateWindow(chat.data.a);
+                chat.data.a = uid;
+                chat.localActivateWindow(uid);
+                chat.remoteActivateWindow(uid);
+            }
             // Prevent click propagation.
             return false;
         });
