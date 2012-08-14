@@ -17,7 +17,7 @@ class ChatStateRepository extends EntityRepository
     public function getOpenStates(ChatSubjectInterface $subject)
     {
         $qb = $this->createQueryBuilder('s');
-        $qb->where('FindInSet(:subject_id, s.openConversations)');
+        $qb->where('FindInSet(:subject_id, s.openConversations) > 0');
         $qb->setParameter(':subject_id', $subject->getId());
         return $qb->getQuery()->execute();
     }

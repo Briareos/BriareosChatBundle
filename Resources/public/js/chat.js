@@ -1,10 +1,10 @@
 (function ($) {
     "use strict";
 
-    var Chat = function (settings) {
+    var Chat = function (nodejs, settings) {
+        this.nodejs = nodejs;
         this.settings = {
             container:'body',
-            nodejs:null,
             tpl:{
                 status:'',
                 user:'',
@@ -171,15 +171,15 @@
             }
         });
 
-        $.post(chat.settings.url.cache, {token:chat.settings.nodejs.authToken}, function (data) {
-            chat.tid = chat.settings.nodejs.socketId;
+        $.post(chat.settings.url.cache, {token:chat.nodejs.authToken}, function (data) {
+            chat.tid = chat.nodejs.socketId;
             chat.data = data;
             chat.state = {};
             chat.pong = 0;
             chat.pingInterval = setInterval(function () {
                 var now = window.parseInt(new Date().getTime() / 1000);
                 if ((now - chat.pong) >= 300) {
-                    $.post(chat.settings.url.ping, {token:chat.settings.nodejs.authToken});
+                    $.post(chat.settings.url.ping, {token:chat.nodejs.authToken});
                 }
             }, 303 * 1000);
             chat.user = {
@@ -239,7 +239,7 @@
                 chat.scrollToBottom(chat.data.a);
             }
 
-            chat.settings.nodejs.callbacks['chat_' + chat.user.u] = function (message) {
+            chat.nodejs.callbacks['chat_' + chat.user.u] = function (message) {
                 // Each request made by the chat sends a randomly generated tab ID
                 // (tid), unique to every tab, which is broadcast back in the socket
                 // message. If those tid's match, it means the request originated from
@@ -484,7 +484,7 @@
         var sendData = {
             uid:0,
             tid:this.tid,
-            token:this.settings.nodejs.authToken
+            token:this.nodejs.authToken
         };
         $.post(this.settings.url.activate, sendData);
     };
@@ -493,7 +493,7 @@
         var sendData = {
             uid:uid,
             tid:this.tid,
-            token:this.settings.nodejs.authToken
+            token:this.nodejs.authToken
         };
         $.post(this.settings.url.activate, sendData);
     };
@@ -502,7 +502,7 @@
         var sendData = {
             uid:uid,
             tid:this.tid,
-            token:this.settings.nodejs.authToken
+            token:this.nodejs.authToken
         };
         $.post(this.settings.url.close, sendData);
     };
@@ -512,9 +512,13 @@
             uid:uid,
             message:messageText,
             tid:this.tid,
-            token:this.settings.nodejs.authToken
+            token:this.nodejs.authToken
         };
         $.post(this.settings.url.send, sendData);
+    };
+
+    Chat.prototype.unload = function() {
+        this.context.remove();
     };
 
     window.Chat = Chat;
