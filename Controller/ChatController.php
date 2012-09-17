@@ -22,7 +22,9 @@ class ChatController extends ContainerAware
 {
     public function getPicture(ChatSubjectInterface $subject)
     {
-        return sprintf('//www.gravatar.com/avatar/%s?s=32', md5(strtolower(trim($subject->getEmail()))));
+        /** @var $pictureProvider \Briareos\ChatBundle\Subject\PictureProviderInterface */
+        $pictureProvider = $this->container->get('chat_subject.picture_provider');
+        return $pictureProvider->getPicture($subject);
     }
 
     public function getSubject()
