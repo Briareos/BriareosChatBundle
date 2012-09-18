@@ -23,8 +23,8 @@ class ChatController extends ContainerAware
     public function getPicture(ChatSubjectInterface $subject)
     {
         /** @var $pictureProvider \Briareos\ChatBundle\Subject\PictureProviderInterface */
-        $pictureProvider = $this->container->get('chat_subject.picture_provider');
-        return $pictureProvider->getPicture($subject);
+        $pictureProvider = $this->container->get($this->container->getParameter('briareos_chat.picture_provider'));
+        return $pictureProvider->getSubjectPicture($subject);
     }
 
     public function getSubject()
@@ -121,7 +121,7 @@ class ChatController extends ContainerAware
             'u' => $subject->getId(),
             'n' => $subject->getChatName(),
             'p' => $this->getPicture($subject),
-            'a' => $chatState->getActiveConversationId(),
+            'a' => $chatState->getActiveConversationId() ? $chatState->getActiveConversationId() : 0,
             'v' => $chatState->getOpenConversations(),
             'o' => $this->generatePresentSubjects($subjectRepository->getPresentSubjects($subject)),
             'w' => array(),
@@ -198,13 +198,13 @@ class ChatController extends ContainerAware
     {
         /** @var $subject ChatSubjectInterface */
         $subject = $this->getSubject();
+        
+        $partnerId = $this->container->get('request')->request->getInt('uid');
 
-        $partnerId = $this->container->get('request')->request->get('uid');
+        $sid = $this->container->get('request')->request->getAlnum('sid', '');
 
-        $tid = $this->container->get('request')->request->get('tid', '');
-
-        if (empty($tid) || !is_string($tid)) {
-            throw new HttpException(400, 'Parameter "tid" is required and must be a string.');
+        if (empty($sid) || !is_string($sid)) {
+            throw new HttpException(400, 'Parameter "sid" (socket ID) is required and must be a string.');
         }
 
         if (!$subject instanceof ChatSubjectInterface) {
@@ -258,7 +258,7 @@ class ChatController extends ContainerAware
         if ($partner) {
             $messageData = array(
                 'command' => 'activate',
-                'tid' => $tid,
+                'sid' => $sid,
                 'uid' => $partner->getId(),
                 'd' => array(
                     'u' => $partner->getId(),
@@ -269,7 +269,7 @@ class ChatController extends ContainerAware
         } else {
             $messageData = array(
                 'command' => 'activate',
-                'tid' => $tid,
+                'sid' => $sid,
                 'uid' => 0,
             );
         }
@@ -294,10 +294,10 @@ class ChatController extends ContainerAware
         /** @var $subject ChatSubjectInterface */
         $subject = $this->getSubject();
 
-        $tid = $this->container->get('request')->request->get('tid', '');
+        $sid = $this->container->get('request')->request->getAlnum('sid', '');
 
-        if (empty($tid) || !is_string($tid)) {
-            throw new HttpException(400, 'Parameter "tid" is required and must be a string.');
+        if (empty($sid) || !is_string($sid)) {
+            throw new HttpException(400, 'Parameter "sid" (socket ID) is required and must be a string.');
         }
 
         if (!$subject instanceof ChatSubjectInterface) {
@@ -313,7 +313,7 @@ class ChatController extends ContainerAware
 
         $subjectRepository = $em->getRepository(get_class($subject));
 
-        $partnerId = $this->container->get('request')->request->get('uid');
+        $partnerId = $this->container->get('request')->request->getInt('uid');
         /** @var $partner ChatSubjectInterface */
         $partner = $subjectRepository->find($partnerId);
 
@@ -348,7 +348,7 @@ class ChatController extends ContainerAware
         $closeMessage = new Message($this->getNodejsCallback($subject));
         $closeMessage->setData(array(
             'command' => 'close',
-            'tid' => $tid,
+            'sid' => $sid,
             'uid' => $partner->getId(),
         ));
         $closeMessage->setChannel('user_' . $subject->getId());
@@ -391,10 +391,10 @@ class ChatController extends ContainerAware
         /** @var $subject ChatSubjectInterface */
         $subject = $this->getSubject();
 
-        $tid = $this->container->get('request')->request->get('tid', '');
+        $sid = $this->container->get('request')->request->getAlnum('sid', '');
 
-        if (empty($tid) || !is_string($tid)) {
-            throw new HttpException(400, 'Parameter "tid" is required and must be a string.');
+        if (empty($sid) || !is_string($sid)) {
+            throw new HttpException(400, 'Parameter "sid" (socket ID) is required and must be a string.');
         }
 
         if (!$subject instanceof ChatSubjectInterface) {
@@ -409,7 +409,7 @@ class ChatController extends ContainerAware
 
         $subjectRepository = $em->getRepository(get_class($subject));
 
-        $partnerId = $this->container->get('request')->request->get('uid');
+        $partnerId = $this->container->get('request')->request->getInt('uid');
         /** @var $partner ChatSubjectInterface */
         $partner = $subjectRepository->find($partnerId);
         $partnerChatState = $stateRepository->getChatState($partner);
@@ -440,7 +440,7 @@ class ChatController extends ContainerAware
 
         $messageData = array(
             'command' => 'message',
-            'tid' => $tid,
+            'sid' => $sid,
             'sender' => array(
                 'u' => $subject->getId(),
                 'n' => $subject->getChatName(),

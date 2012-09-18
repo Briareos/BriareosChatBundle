@@ -25,61 +25,164 @@
         this.status = false;
     };
 
+    Chat.prototype.isOpen = function (uid) {
+        return ($.inArray(uid, this.data.v) !== -1);
+    };
+
+    Chat.prototype.addOpen = function (uid) {
+        this.data.v.push(uid);
+    };
+
+    Chat.prototype.isActive = function (uid) {
+        return (this.data.a === uid);
+    };
+
+    Chat.prototype.setActive = function (uid) {
+        this.data.a = uid;
+    };
+
+    Chat.prototype.removeActive = function (uid) {
+        var index = $.inArray(uid, this.data.v);
+        this.data.v.splice(index, index + 1);
+    };
+
+    Chat.prototype.getActive = function () {
+        return this.data.a;
+    };
+
+    Chat.prototype.isStatusWindowOpen = function () {
+        return this.status;
+    };
+
+    Chat.prototype.setStatusWindowOpen = function (state) {
+        this.status = state;
+    };
+
+    Chat.prototype.chatWith = function (uid, name, picture) {
+        uid = window.parseInt(uid);
+        if (!this.isOpen(uid)) {
+            var partner = {
+                u:uid,
+                n:name,
+                p:picture
+            };
+            this.addOpen(uid);
+            this.localCreateWindow(partner);
+        }
+        if (!this.isActive(uid)) {
+            this.localDeactivateWindow(this.getActive());
+            this.setActive(uid);
+            this.localActivateWindow(uid);
+            this.remoteActivateWindow(uid);
+        }
+    };
+
+    Chat.prototype.chatToggle = function (uid) {
+        if (this.isNumber(uid)) {
+            uid = window.parseInt(uid);
+            if (this.isActive(uid)) {
+                // User window has been deactivated.
+                this.setActive(0);
+                this.localDeactivateWindow(uid);
+                this.remoteDeactivateWindow(uid);
+            } else {
+                // User window has been activated.
+                // Deactivate the old window.
+                this.localDeactivateWindow(this.getActive());
+                this.setActive(uid);
+                this.localActivateWindow(uid);
+                this.remoteActivateWindow(uid);
+            }
+        } else {
+            if (this.isStatusWindowOpen()) {
+                this.setStatusWindowOpen(false);
+                this.localDeactivateStatus();
+            } else {
+                this.setStatusWindowOpen(true);
+                this.localActivateStatus();
+            }
+        }
+    };
+
+    Chat.prototype.chatMinimize = function (uid) {
+        this.localDeactivateWindow(uid);
+        if (this.isNumber(uid)) {
+            this.setActive(0);
+            this.remoteDeactivateWindow(uid);
+        } else {
+            this.setStatusWindowOpen(false);
+        }
+    };
+
+    Chat.prototype.chatClose = function (uid) {
+        // If this is currently active window, unset the active window.
+        if (this.isActive(uid)) {
+            this.setActive(0);
+        }
+        this.removeActive(uid);
+        this.localCloseWindow(uid);
+        this.remoteCloseWindow(uid);
+    };
+
+    Chat.prototype.chatSend = function (uid, name, picture, messageText) {
+        var partner = {
+            u:uid,
+            n:name,
+            p:picture
+        };
+        var message = {
+            i:0,
+            t:new Date().getTime() / 1000,
+            b:this.escape(messageText),
+            r:false
+        };
+        this.localSendMessage(partner, message);
+        this.remoteSendMessage(uid, messageText);
+    };
+
+    Chat.prototype.chatFocus = function (uid) {
+        $('[data-chat="input"][data-uid="' + uid + '"]', this.context).focus();
+    };
+
+    Chat.prototype.getHeight = function (id, elementClass, text) {
+        var cloneId = 'chat-clone-' + this.sid + '-' + id;
+        var $clone = $('#' + cloneId);
+        if (!$clone.length) {
+            $clone = $('<div />').attr('id', cloneId).addClass(elementClass).css({
+                maxHeight:'none',
+                position:'absolute',
+                wordWrap:'break-word',
+                height:'auto',
+                display:'none'
+            });
+            this.context.append($clone);
+        }
+        $clone.html(text
+            .replace(/&/g, '&amp;')
+            .replace(/ {2}/g, ' &nbsp;').replace(/<|>/g, '&gt;')
+            .replace(/\n/g, '<br />') +
+            '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+        return $clone.height();
+    };
+
     Chat.prototype.initialize = function () {
         var chat = this;
         chat.context = $(chat.compileTpl('chat'));
-        $(chat.settings.container).append(chat.context);
+        var container = $(chat.settings.container);
+        container.append(chat.context);
 
         $(chat.context).on('click', '[data-chat="toggle"]', function () {
             var $context = $(this);
             var uid = $context.data('uid');
-            if (chat.isNumber(uid)) {
-                uid = window.parseInt(uid);
-                if (chat.data.a === uid) {
-                    // User window has been deactivated.
-                    chat.data.a = 0;
-                    chat.localDeactivateWindow(uid);
-                    chat.remoteDeactivateWindow(uid);
-                } else {
-                    // User window has been activated.
-                    // Deactivate the old window.
-                    chat.localDeactivateWindow(chat.data.a);
-                    chat.data.a = uid;
-                    chat.localActivateWindow(uid);
-                    chat.remoteActivateWindow(uid);
-                }
-            } else {
-                if (chat.status) {
-                    chat.status = false;
-                    chat.localDeactivateStatus();
-                } else {
-                    chat.status = true;
-                    chat.localActivateStatus();
-                }
-            }
-            // Prevent click propagation.
+            chat.chatToggle(uid);
+            // Stop click propagation.
             return false;
         });
 
         $(chat.context).on('click', '[data-chat="user"]', function () {
             var $context = $(this);
-            var uid = window.parseInt($context.data('uid'));
-            if ($.inArray(uid, chat.data.v) === -1) {
-                var partner = {
-                    u:uid,
-                    n:$context.data('name'),
-                    p:$context.data('picture')
-                };
-                chat.data.v.push(uid);
-                chat.localCreateWindow(partner);
-            }
-            if (chat.data.a !== uid) {
-                chat.localDeactivateWindow(chat.data.a);
-                chat.data.a = uid;
-                chat.localActivateWindow(uid);
-                chat.remoteActivateWindow(uid);
-            }
-            // Prevent click propagation.
+            chat.chatWith($context.data('uid'), $context.data('name'), $context.data('picture'));
+            // Stop click propagation.
             return false;
         });
 
@@ -87,92 +190,44 @@
             var $context = $(e.srcElement);
             if ($context.data('chat') === 'minimize') {
                 var uid = $context.data('uid');
-                chat.localDeactivateWindow(uid);
-                if (chat.isNumber(uid)) {
-                    uid = window.parseInt(uid);
-                    chat.data.a = 0;
-                    chat.remoteDeactivateWindow(uid);
-                } else {
-                    chat.status = false;
-                }
+                chat.chatMinimize(uid);
             }
-            // Prevent click propagation.
+            // Stop click propagation.
             return false;
         });
 
         $(this.context).on('click', '[data-chat="close"]', function () {
             var $context = $(this);
-            // If this is currently active window, unset the active window.
             var uid = window.parseInt($context.data('uid'));
-            if (chat.data.a === uid) {
-                chat.data.a = 0;
-            }
-            // Remove the window from the array of open windows.
-            var index = $.inArray(uid, chat.data.v);
-            chat.data.v.splice(index, index + 1);
-
-            chat.localCloseWindow(uid);
-            chat.remoteCloseWindow(uid);
-            // Prevent click propagation.
+            chat.chatClose(uid);
+            // Stop click propagation.
             return false;
         });
 
         $(chat.context).on('click', '[data-chat="focus"]', function () {
             var $context = $(this);
             var uid = window.parseInt($context.data('uid'));
-            chat.data.a = uid;
-            chat.localActivateWindow(uid);
+            chat.chatFocus(uid);
         });
 
         $(chat.context).on('keyup', '[data-chat="input"]', function () {
             var $context = $(this);
             var uid = $context.data('uid');
-            var cloneId = 'chat-clone-' + uid;
-            var $clone = $('#' + cloneId, chat.context);
-            if (!$clone.length) {
-                $clone = $('<div />').attr('id', cloneId).addClass($context.attr('class')).css({
-                    maxHeight:'none',
-                    position:'absolute',
-                    wordWrap:'break-word',
-                    height:'auto',
-                    display:'none'
-                });
-                $context.after($clone);
-            }
-            $clone.html($context.val()
-                .replace(/&/g, '&amp;')
-                .replace(/ {2}/g, ' &nbsp;').replace(/<|>/g, '&gt;')
-                .replace(/\n/g, '<br />') +
-                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
-            $context.css('height', $clone.height());
+            $context.css('height', chat.getHeight($context.data('uid'), $context.attr('class'), $context.val()));
         });
 
         $(chat.context).on('keydown', '[data-chat="input"]', function (e) {
             if (e.keyCode === 13) {
                 var $context = $(this);
-                var uid = window.parseInt($context.data('uid'));
-                var partner = {
-                    u:uid,
-                    n:$context.data('name'),
-                    p:$context.data('picture')
-                };
-                var messageText = $context.val();
-                var message = {
-                    i:0,
-                    t:new Date().getTime() / 1000,
-                    b:chat.escape(messageText),
-                    r:false
-                };
-                chat.localSendMessage(partner, message);
-                chat.remoteSendMessage(uid, messageText);
+                chat.chatSend($context.data('uid'), $context.data('name'), $context.data('picture'), $context.val());
                 $context.val('');
-                // Prevent event propagation.
-                return false;
+                // Stop event propagation.
+                e.preventDefault();
             }
         });
 
         $.post(chat.settings.url.cache, {token:chat.nodejs.authToken}, function (data) {
-            chat.tid = chat.nodejs.socketId;
+            chat.sid = chat.nodejs.socketId;
             chat.data = data;
             chat.state = {};
             chat.pong = 0;
@@ -233,23 +288,21 @@
                 }
             }
 
-            if (chat.data.a) {
-                chat.localActivateWindow(chat.data.a);
-                // Scroll this chat window to the bottom.
-                chat.scrollToBottom(chat.data.a);
+            if (chat.getActive()) {
+                chat.localActivateWindow(chat.getActive());
             }
 
             chat.nodejs.callbacks['chat_' + chat.user.u] = function (message) {
-                // Each request made by the chat sends a randomly generated tab ID
-                // (tid), unique to every tab, which is broadcast back in the socket
-                // message. If those tid's match, it means the request originated from
+                // Each request made by the chat sends a socket ID, unique to every open tab,
+                // which is broadcast with every socket message sent from server.
+                // If those IDs match, it means the request originated from
                 // this tab. This is done so no duplicate operations occur.
-                var isOrigin = (message.data.tid === chat.tid);
+                var isOrigin = (message.data.sid === chat.sid);
                 // These commands reflect user's actions, such as open (window), close,
                 // activate, etc.
                 switch (message.data.command) {
                     case 'pong':
-                        chat.pong = new Date().getTime() / 1000;
+                        chat.pong = window.parseInt(new Date().getTime() / 1000);
                         break;
 
                     case 'message':
@@ -354,17 +407,6 @@
             .replace(/'/g, "&#039;");
     };
 
-    Chat.prototype.generateTid = function () {
-        var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
-        var tidLength = 12;
-        var tid = '';
-        for (var i = 0; i < tidLength; i++) {
-            var randomNumber = Math.floor(Math.random() * chars.length);
-            tid += chars.substring(randomNumber, randomNumber + 1);
-        }
-        return tid;
-    };
-
     Chat.prototype.isScrolledToBottom = function (uid) {
         if (this.data.a !== uid) {
             // This chat window is not open at all.
@@ -427,13 +469,14 @@
 
     Chat.prototype.localActivateWindow = function (uid) {
         for (var i = 0; i < this.data.v.length; i++) {
+            //if (this.data.v[i] !== uid) {
             if (this.data.v[i] !== uid) {
                 this.localDeactivateWindow(uid);
             }
         }
         $('[data-chat="window"][data-uid="' + uid + '"]', this.context).addClass('active');
         $('[data-chat="panel"][data-uid="' + uid + '"]', this.context).show();
-        $('[data-chat="input"][data-uid="' + uid + '"]', this.context).focus();
+        this.chatFocus(uid);
 
         this.noNewMessages(uid);
         this.scrollToBottom(uid);
@@ -441,7 +484,7 @@
 
     Chat.prototype.localCloseWindow = function (uid) {
         delete this.state[uid];
-        $('[data-chat="window"][data-uid="' + uid + '"]').remove();
+        $('[data-chat="window"][data-uid="' + uid + '"]', this.context).remove();
     };
 
     Chat.prototype.localSendMessage = function (partner, message) {
@@ -483,7 +526,7 @@
     Chat.prototype.remoteDeactivateWindow = function (uid) {
         var sendData = {
             uid:0,
-            tid:this.tid,
+            sid:this.sid,
             token:this.nodejs.authToken
         };
         $.post(this.settings.url.activate, sendData);
@@ -492,7 +535,7 @@
     Chat.prototype.remoteActivateWindow = function (uid) {
         var sendData = {
             uid:uid,
-            tid:this.tid,
+            sid:this.sid,
             token:this.nodejs.authToken
         };
         $.post(this.settings.url.activate, sendData);
@@ -501,7 +544,7 @@
     Chat.prototype.remoteCloseWindow = function (uid) {
         var sendData = {
             uid:uid,
-            tid:this.tid,
+            sid:this.sid,
             token:this.nodejs.authToken
         };
         $.post(this.settings.url.close, sendData);
@@ -511,13 +554,13 @@
         var sendData = {
             uid:uid,
             message:messageText,
-            tid:this.tid,
+            sid:this.sid,
             token:this.nodejs.authToken
         };
         $.post(this.settings.url.send, sendData);
     };
 
-    Chat.prototype.unload = function() {
+    Chat.prototype.unload = function () {
         this.context.remove();
     };
 

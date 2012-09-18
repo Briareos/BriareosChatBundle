@@ -1,16 +1,11 @@
-parameters:
-    chat_subject.listener.class: Briareos\ChatBundle\Listener\ChatSubjectRemoveListener
-    chat_subject.picture_provider.class: Briareos\ChatBundle\Subject\PlaceholditPictureProvider
-    chat_subject.presence_provider.class: Briareos\ChatBundle\Subject\BasicPresenceProvider
-
 services:
     chat_subject.listener:
-        class: %chat_subject.listener.class%
+        class: Briareos\ChatBundle\Listener\ChatSubjectRemoveListener
         tags:
             - { name: doctrine.event_listener, event: preRemove }
     chat_subject.picture_provider:
-        class: %chat_subject.picture_provider.class%
+        class: Briareos\ChatBundle\Subject\PlaceholditPictureProvider
         arguments: [ 32x32 ]
     chat_subject.presence_provider:
-        class: %chat_subject.presence_provider.class%
+        class: Briareos\ChatBundle\Subject\BasicPresenceProvider
         arguments: [ @doctrine.orm.default_entity_manager ]

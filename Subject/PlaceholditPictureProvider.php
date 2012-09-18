@@ -14,7 +14,7 @@ class PlaceholditPictureProvider implements PictureProviderInterface
         $this->dimensions = $dimensions;
     }
 
-    public function getPicture(ChatSubjectInterface $subject)
+    public function getSubjectPicture(ChatSubjectInterface $subject)
     {
         return sprintf('http://placehold.it/%s', $this->dimensions);
     }

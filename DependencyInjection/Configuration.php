@@ -19,6 +19,10 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('briareos_chat');
+        $rootNode
+            ->children()
+            ->scalarNode('picture_provider')->defaultValue('chat_subject.picture_provider')->end()
+            ->end();
 
         // Here you should define the parameters that are allowed to
         // configure your bundle. See the documentation linked above for
