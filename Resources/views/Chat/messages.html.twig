@@ -1,0 +1,13 @@
+{% spaceless %}
+    <div class="messages-container clearfix">
+        <a class="profile-link" href="${url}">
+            <img class="profile-picture" src="${picture}" alt="" title="" />
+        </a>
+        <div class="chat-messages">
+            <div class="message-info">
+                <span class="timestamp">${time}</span>
+            </div>
+            <div data-chat="messages" data-uid="${uid}"></div>
+        </div>
+    </div>
+{% endspaceless %}

@@ -1,28 +1,27 @@
-{% import 'BriareosChatBundle:Chat:chat_template.html.twig' as chat %}
-
-<link href="{{ asset('bundles/briareoschat/css/chat.css') }}" type="text/css" rel="stylesheet"/>
-<script type="text/javascript" src="{{ asset('bundles/briareoschat/js/chat.js') }}"></script>
-<script type="text/javascript">
-    jQuery(document).ready(function ($) {
-        var LocalChat = new Chat({
-            container:'body',
-            nodejs:window.Nodejs,
-            tpl:{
-                status:'{{ chat.status() }}',
-                user:'{{ chat.user() }}',
-                window:'{{ chat.window() }}',
-                message:'{{ chat.message() }}',
-                messages:'{{ chat.messages() }}',
-                chat:'{{ chat.chat() }}'
-            },
-            url:{
-                cache:'{{ path('briareos_chat_cache') }}',
-                activate:'{{ path('briareos_chat_activate') }}',
-                close:'{{ path('briareos_chat_close') }}',
-                send:'{{ path('briareos_chat_send') }}',
-                ping:'{{ path('briareos_chat_ping') }}'
-            }
-        });
-        DefaultChat.initialize();
-    });
-</script>
+{% spaceless %}
+    <div class="chat">
+        <div class="level-1 clearfix">
+            <div class="level-2 clearfix">
+                <div class="level-3 clearfix">
+                    <div class="windows-wrapper-outer">
+                        <div class="windows-wrapper-inner clearfix">
+                            <div class="chat-windows clearfix" data-chat="windows"></div>
+                        </div>
+                    </div>
+                    <div class="chat-status" data-chat="placeholder">
+                        <a class="window-toggle">
+                            <div class="name-wrapper-outer">
+                                <div class="name-wrapper-inner clearfix">
+                                    <img class="icon" src="https://s-static.ak.facebook.com/rsrc.php/v1/y4/r/-PAXP-deijE.gif" alt="" width="1" height="1" />
+                                    <div class="name-wrapper">
+                                        <span class="chat-label">Chat <span class="count">(<strong class="count-number">loading...</strong>)</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endspaceless %}

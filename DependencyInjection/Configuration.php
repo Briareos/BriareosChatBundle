@@ -21,12 +21,24 @@ class Configuration implements ConfigurationInterface
         $rootNode = $treeBuilder->root('briareos_chat');
         $rootNode
             ->children()
-            ->scalarNode('picture_provider')->defaultValue('chat_subject.picture_provider')->end()
+                ->scalarNode('picture_provider')->defaultValue('chat_subject.picture_provider')->end()
+                ->scalarNode('default_container')->defaultValue('body')->end()
+                ->arrayNode('templates')
+                    ->scalarNode('chat')->defaultValue('BriareosChatBundle:Chat:chat.html.twig')->end()
+                    ->scalarNode('message')->defaultValue('BriareosChatBundle:Chat:message.html.twig')->end()
+                    ->scalarNode('messages')->defaultValue('BriareosChatBundle:Chat:messages.html.twig')->end()
+                    ->scalarNode('status')->defaultValue('BriareosChatBundle:Chat:status.html.twig')->end()
+                    ->scalarNode('user')->defaultValue('BriareosChatBundle:Chat:user.html.twig')->end()
+                    ->scalarNode('window')->defaultValue('BriareosChatBundle:Chat:window.html.twig')->end()
+                ->end()
+                ->arrayNode('routes')
+                    ->scalarNode('cache')->defaultValue('briareos_chat_cache')->end()
+                    ->scalarNode('activate')->defaultValue('briareos_chat_activate')->end()
+                    ->scalarNode('close')->defaultValue('briareos_chat_close')->end()
+                    ->scalarNode('send')->defaultValue('briareos_chat_send')->end()
+                    ->scalarNode('ping')->defaultValue('briareos_chat_ping')->end()
+                ->end()
             ->end();
-
-        // Here you should define the parameters that are allowed to
-        // configure your bundle. See the documentation linked above for
-        // more information on that topic.
 
         return $treeBuilder;
     }

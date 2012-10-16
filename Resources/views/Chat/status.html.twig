@@ -1,0 +1,23 @@
+{% spaceless %}
+    <div class="chat-status" data-chat="window" data-uid="status">
+        <a class="window-toggle" data-chat="toggle" data-uid="status">
+            <div class="name-wrapper-outer">
+                <div class="name-wrapper-inner clearfix">
+                    <img class="icon" src="https://s-static.ak.facebook.com/rsrc.php/v1/y4/r/-PAXP-deijE.gif" alt="" width="1" height="1" />
+                    <div class="name-wrapper">
+                        <span class="chat-label">Chat <span class="count">(<strong class="count-number">${count}</strong>)</span></span>
+                    </div>
+                </div>
+            </div>
+        </a>
+        <div class="panel" data-chat="panel" data-uid="status">
+            <div class="title-wrapper clearfix" data-chat="minimize" data-uid="status">
+                <div class="title" data-chat="minimize" data-uid="status">Chat</div>
+            </div>
+            <div class="body">
+                <div class="chat-users">
+                    <div class="chat-empty"></div>${users}</div>
+            </div>
+        </div>
+    </div>
+{% endspaceless %}

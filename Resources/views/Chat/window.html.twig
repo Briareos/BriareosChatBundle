@@ -1,0 +1,38 @@
+{% spaceless %}
+    <div class="window" data-chat="window" data-uid="${uid}">
+        <a class="window-toggle" data-chat="toggle" data-uid="${uid}">
+            <div class="name-wrapper-outer">
+                <div class="name-wrapper-inner clearfix">
+                    <div class="name-wrapper">
+                        <div class="name-wrapper-wrapper">
+                            <div class="name-wrapper-name">${name}</div>
+                        </div>
+                    </div>
+                    <div class="close-container">
+                        <label class="close" data-chat="close" data-uid="${uid}" for="chat-uid-${uid}">
+                            <input title="Close" type="button" />
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </a>
+        <div class="panel" data-chat="panel" data-uid="${uid}">
+            <div class="title-wrapper" data-chat="minimize" data-uid="${uid}">
+                <div class="title-wrapper-outer">
+                    <div class="title-wrapper-inner" data-chat="minimize" data-uid="${uid}">
+                        <a class="title-text" href="${uri}">${name}</a>
+                    </div>
+                </div>
+            </div>
+            <div class="body" data-chat="focus" data-uid="${uid}">
+                <div class="conversation-container">
+                    <div class="conversation" data-chat="conversation" data-uid="${uid}"></div>
+                </div>
+            </div>
+            <div class="message-input">
+                <textarea class="message-text" data-chat="input" data-uid="${uid}" data-name="${name}" data-picture="${picture}"></textarea>
+                <span></span>
+            </div>
+        </div>
+    </div>
+{% endspaceless %}
