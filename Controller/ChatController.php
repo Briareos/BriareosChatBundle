@@ -44,6 +44,7 @@ class ChatController extends ContainerAware
 
     private function getAuthToken()
     {
+        /** @var $request \Symfony\Component\HttpFoundation\Request */
         $request = $this->container->get('request');
         $authToken = $request->request->get('token');
         if (!is_scalar($authToken) || empty($authToken)) {

@@ -26,5 +26,8 @@ class BriareosChatExtension extends Extension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
+
+        $container->setParameter('chat.templates', $config['templates']);
+        $container->setParameter('chat.routes', $config['routes']);
     }
 }
