@@ -358,8 +358,8 @@
                             chat.localCloseWindow(message.data.uid);
                             var closeIndex = $.inArray(message.data.uid, chat.data.v);
                             chat.data.v.splice(closeIndex, closeIndex + 1);
-                            if (chat.data.a === message.data.uid) {
-                                chat.data.a = 0;
+                            if (chat.getActive() === message.data.uid) {
+                                chat.removeActive();
                             }
                         }
                         break;
@@ -367,18 +367,19 @@
                     case 'activate':
                         if (!isOrigin) {
                             if (message.data.uid === 0) {
-                                chat.localDeactivateWindow(chat.data.a);
+                                chat.localDeactivateWindow();
                             } else {
-                                var index = $.inArray(message.data.uid, chat.data.v);
-                                if (index === -1) {
-                                    chat.data.v.push(message.data.uid);
+                                if (chat.isOpen(message.data.uid)) {
+                                } else {
+                                    chat.addOpen(message.data.uid);
                                     chat.localCreateWindow(message.data.d);
                                 }
+                                chat.localDeactivateWindow(chat.getActive());
                                 chat.localActivateWindow(message.data.uid);
                                 chat.scrollToBottom(message.data.uid);
                                 chat.noNewMessages(message.data.uid);
                             }
-                            chat.data.a = message.data.uid;
+                            chat.setActive(message.data.uid);
                         }
                         break;
                 }
