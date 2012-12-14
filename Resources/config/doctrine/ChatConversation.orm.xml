@@ -6,14 +6,14 @@
     </id>
     <field name="lastMessageRead" type="integer" column="lastMessageRead" nullable="false"/>
     <field name="lastMessageCleared" type="integer" column="lastMessageCleared" nullable="false"/>
-    <many-to-one field="partner" target-entity="Kurumi\UserBundle\Entity\User">
+    <many-to-one field="partner" target-entity="Briareos\ChatBundle\Entity\ChatSubjectInterface">
       <join-columns>
-        <join-column name="partner_id" referenced-column-name="id" on-delete="CASCADE" nullable=""/>
+        <join-column name="partner_id" referenced-column-name="id" on-delete="CASCADE" nullable="false"/>
       </join-columns>
     </many-to-one>
-    <many-to-one field="subject" target-entity="Kurumi\UserBundle\Entity\User">
+    <many-to-one field="subject" target-entity="Briareos\ChatBundle\Entity\ChatSubjectInterface">
       <join-columns>
-        <join-column name="subject_id" referenced-column-name="id" on-delete="CASCADE" nullable=""/>
+        <join-column name="subject_id" referenced-column-name="id" on-delete="CASCADE" nullable="false"/>
       </join-columns>
     </many-to-one>
   </entity>

@@ -6,14 +6,14 @@
     </id>
     <field name="text" type="text" column="text"/>
     <field name="createdAt" type="datetime" column="createdAt"/>
-    <many-to-one field="receiver" target-entity="Kurumi\UserBundle\Entity\User">
+    <many-to-one field="receiver" target-entity="Briareos\ChatBundle\Entity\ChatSubjectInterface">
       <join-columns>
-        <join-column name="receiver_id" referenced-column-name="id" on-delete="CASCADE" nullable=""/>
+        <join-column name="receiver_id" referenced-column-name="id" on-delete="CASCADE" nullable="false"/>
       </join-columns>
     </many-to-one>
-    <many-to-one field="sender" target-entity="Kurumi\UserBundle\Entity\User">
+    <many-to-one field="sender" target-entity="Briareos\ChatBundle\Entity\ChatSubjectInterface">
       <join-columns>
-        <join-column name="sender_id" referenced-column-name="id" on-delete="CASCADE" nullable=""/>
+        <join-column name="sender_id" referenced-column-name="id" on-delete="CASCADE" nullable="false"/>
       </join-columns>
     </many-to-one>
   </entity>
