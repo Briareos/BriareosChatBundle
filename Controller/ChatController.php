@@ -3,13 +3,11 @@
 namespace Briareos\ChatBundle\Controller;
 
 use Symfony\Component\DependencyInjection\ContainerAware;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Response;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Briareos\NodejsBundle\Nodejs\Message;
 use Briareos\NodejsBundle\Nodejs\DispatcherInterface;
 use Briareos\NodejsBundle\Entity\NodejsPresence;
