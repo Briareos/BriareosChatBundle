@@ -367,7 +367,7 @@
                     case 'activate':
                         if (!isOrigin) {
                             if (message.data.uid === 0) {
-                                chat.localDeactivateWindow();
+                                chat.localDeactivateWindow(chat.getActive());
                             } else {
                                 if (chat.isOpen(message.data.uid)) {
                                 } else {

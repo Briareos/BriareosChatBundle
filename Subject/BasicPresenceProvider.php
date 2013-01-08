@@ -16,14 +16,16 @@ class BasicPresenceProvider
 
     public function getPresentSubjects(ChatSubjectInterface $subject)
     {
-        $presences = $this->em->createQuery('Select p From BriareosNodejsBundle:NodejsPresence p Inner Join p.subject s Where p.subject Is Not Null Group By p.subject Order By p.seenAt Desc')->execute();
+        $presences = $this->em
+          ->createQuery('Select p From BriareosNodejsBundle:NodejsPresence p Inner Join p.subject s Where p.subject <> :subject And p.subject Is Not Null Group By p.subject Order By p.seenAt Desc')
+          ->setParameter('subject', $subject)
+          ->execute();
         $subjects = array();
         /** @var $presence \Briareos\NodejsBundle\Entity\NodejsPresence */
         foreach ($presences as $presence) {
-            if ($presence->getSubject()->getId() !== $subject->getId()) {
-                $subjects[] = $presence->getSubject();
-            }
+            $subjects[] = $presence->getSubject();
         }
+
         return $subjects;
     }
 }
