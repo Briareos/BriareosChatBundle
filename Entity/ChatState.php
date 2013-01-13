@@ -111,7 +111,7 @@ class ChatState
     /**
      * Set activeConversation
      *
-     * @param ChatSubjectInterface $activeConversation
+     * @param ChatSubjectInterface|null $activeConversation
      * @return ChatState
      */
     public function setActiveConversation(ChatSubjectInterface $activeConversation = null)

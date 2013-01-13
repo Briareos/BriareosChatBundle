@@ -22,6 +22,10 @@ class ChatStateRepository extends EntityRepository
         return $qb->getQuery()->execute();
     }
 
+    /**
+     * @param ChatSubjectInterface $subject
+     * @return ChatState
+     */
     public function getChatState(ChatSubjectInterface $subject)
     {
         $chatState = $this->findOneBy(array(

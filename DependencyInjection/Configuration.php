@@ -22,6 +22,7 @@ class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->scalarNode('picture_provider')->defaultValue('chat_subject.picture_provider')->end()
+                ->scalarNode('presence_provider')->defaultValue('chat_subject.presence_provider')->end()
                 ->scalarNode('default_container')->defaultValue('body')->end()
                 ->arrayNode('templates')
                     ->addDefaultsIfNotSet()

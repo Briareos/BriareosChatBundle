@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <service id="briareos_chat.controller" class="Briareos\ChatBundle\Controller\ChatController">
+            <argument type="service" id="doctrine.orm.entity_manager"/>
+            <argument type="service" id="nodejs.dispatcher"/>
+            <argument type="service" id="briareos_chat.picture_provider"/>
+            <argument type="service" id="briareos_chat.presence_provider"/>
+        </service>
+        <service id="chat_subject.listener" class="Briareos\ChatBundle\Listener\ChatSubjectRemoveListener">
+            <tag name="doctrine.event_listener" event="preRemove"/>
+        </service>
+        <service id="chat_subject.placeholdit_picture_provider" class="Briareos\ChatBundle\Subject\PlaceholditPictureProvider" public="false">
+            <argument>32x32</argument>
+        </service>
+        <service id="chat_subject.basic_presence_provider" class="Briareos\ChatBundle\Subject\BasicPresenceProvider" public="false">
+            <argument type="service" id="doctrine.orm.entity_manager"/>
+        </service>
+    </services>
+</container>
