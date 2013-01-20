@@ -457,7 +457,7 @@ class ChatController
         if ($partnerChatState->getActiveConversationId() && $partnerChatState->getActiveConversationId() === $subject->getId()) {
             /** @var $conversationRepository \Briareos\ChatBundle\Entity\ChatConversationRepository */
             $conversationRepository = $this->em->getRepository('BriareosChatBundle:ChatConversation');
-            $chatConversation = $conversationRepository->getConversation($subject, $partner);
+            $chatConversation = $conversationRepository->getConversation($partner, $subject);
             // We need the message ID.
             $this->em->flush($message);
             $chatConversation->setLastMessageRead($message->getId());
