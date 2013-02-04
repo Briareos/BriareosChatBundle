@@ -4,21 +4,21 @@
     var Chat = function (nodejs, settings) {
         this.nodejs = nodejs;
         this.settings = {
-            container:'body',
-            tpl:{
-                status:'',
-                user:'',
-                window:'',
-                message:'',
-                messages:'',
-                chat:''
+            container: 'body',
+            tpl: {
+                status: '',
+                user: '',
+                window: '',
+                message: '',
+                messages: '',
+                chat: ''
             },
-            url:{
-                cache:'',
-                activate:'',
-                close:'',
-                send:'',
-                ping:''
+            url: {
+                cache: '',
+                activate: '',
+                close: '',
+                send: '',
+                ping: ''
             }
         };
         $.extend(this.settings, settings);
@@ -62,9 +62,9 @@
         uid = window.parseInt(uid);
         if (!this.isOpen(uid)) {
             var partner = {
-                u:uid,
-                n:name,
-                p:picture
+                u: uid,
+                n: name,
+                p: picture
             };
             this.addOpen(uid);
             this.localCreateWindow(partner);
@@ -126,15 +126,15 @@
 
     Chat.prototype.chatSend = function (uid, name, picture, messageText) {
         var partner = {
-            u:uid,
-            n:name,
-            p:picture
+            u: uid,
+            n: name,
+            p: picture
         };
         var message = {
-            i:0,
-            t:new Date().getTime() / 1000,
-            b:this.escape(messageText),
-            r:false
+            i: 0,
+            t: new Date().getTime() / 1000,
+            b: this.escape(messageText),
+            r: false
         };
         this.localSendMessage(partner, message);
         this.remoteSendMessage(uid, messageText);
@@ -149,11 +149,11 @@
         var $clone = $('#' + cloneId);
         if (!$clone.length) {
             $clone = $('<div />').attr('id', cloneId).addClass(elementClass).css({
-                maxHeight:'none',
-                position:'absolute',
-                wordWrap:'break-word',
-                height:'auto',
-                display:'none'
+                maxHeight: 'none',
+                position: 'absolute',
+                wordWrap: 'break-word',
+                height: 'auto',
+                display: 'none'
             });
             this.context.append($clone);
         }
@@ -226,7 +226,7 @@
             }
         });
 
-        $.post(chat.settings.url.cache, {token:chat.nodejs.authToken}, function (data) {
+        $.post(chat.settings.url.cache, {token: chat.nodejs.authToken}, function (data) {
             chat.sid = chat.nodejs.socketId;
             chat.data = data;
             chat.state = {};
@@ -234,13 +234,13 @@
             chat.pingInterval = setInterval(function () {
                 var now = window.parseInt(new Date().getTime() / 1000);
                 if ((now - chat.pong) >= 300) {
-                    $.post(chat.settings.url.ping, {token:chat.nodejs.authToken});
+                    $.post(chat.settings.url.ping, {token: chat.nodejs.authToken});
                 }
             }, 303 * 1000);
             chat.user = {
-                u:data.u,
-                n:data.n,
-                p:data.p
+                u: data.u,
+                n: data.n,
+                p: data.p
             };
             // First generate the status block
             var onlineUsersHtml = '';
@@ -252,18 +252,18 @@
                     var onlineUser = chat.data.o[partnerUid];
                     // n:name, s:status, p:picture, u:uid
                     var userData = {
-                        uid:onlineUser.u,
-                        name:onlineUser.n,
-                        status:onlineUser.s,
-                        picture:onlineUser.p
+                        uid: onlineUser.u,
+                        name: onlineUser.n,
+                        status: onlineUser.s,
+                        picture: onlineUser.p
                     };
                     onlineUsersHtml += chat.compileTpl('user', userData);
                     countUsers++;
                 }
             }
             var onlineUsersData = {
-                users:onlineUsersHtml,
-                count:countUsers
+                users: onlineUsersHtml,
+                count: countUsers
             };
             onlineUsersHtml = chat.compileTpl('status', onlineUsersData);
             $('[data-chat="placeholder"]', chat.context).replaceWith(onlineUsersHtml);
@@ -437,10 +437,10 @@
     Chat.prototype.generateWindow = function (partner, messages) {
         messages = messages || '';
         var windowData = {
-            uid:partner.u,
-            name:partner.n,
-            picture:partner.p,
-            messages:messages
+            uid: partner.u,
+            name: partner.n,
+            picture: partner.p,
+            messages: messages
         };
         return this.compileTpl('window', windowData);
     };
@@ -452,7 +452,7 @@
 
     Chat.prototype.localCreateWindow = function (partner) {
         this.state[partner.u] = {
-            last:false
+            last: false
         };
         var chatWindow = $(this.generateWindow(partner));
         $('[data-chat="windows"]', this.context).prepend(chatWindow);
@@ -494,12 +494,12 @@
         messageTime.setTime((window.parseInt(message.t)) * 1000);
         var monthNamesShort = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ];
         var messageData = {
-            uid:message.r ? partner.u : this.user.u,
-            cmid:message.i,
-            name:message.r ? partner.n : this.user.n,
-            picture:message.r ? partner.p : this.user.p,
-            body:message.b,
-            time:messageTime.getDate() + '. ' + monthNamesShort[messageTime
+            uid: message.r ? partner.u : this.user.u,
+            cmid: message.i,
+            name: message.r ? partner.n : this.user.n,
+            picture: message.r ? partner.p : this.user.p,
+            body: message.b,
+            time: messageTime.getDate() + '. ' + monthNamesShort[messageTime
                 .getMonth()] + ' \'' + String(messageTime.getFullYear()).substring(2, 4) + '. @ ' + messageTime
                 .getHours() + ':' + messageTime.getMinutes()
         };
@@ -519,44 +519,44 @@
     };
 
     Chat.prototype.localUpdateMessage = function (uid, messageId, messageBody) {
-        $('[data-chat="message"][data-uid="' + uid + '"][data-cmid="0"]:first')
+        $('[data-chat="message"][data-uid="' + uid + '"][data-cmid="0"]:first', this.context)
             .attr('data-cmid', messageId)
             .html(messageBody);
     };
 
     Chat.prototype.remoteDeactivateWindow = function (uid) {
         var sendData = {
-            uid:0,
-            sid:this.sid,
-            token:this.nodejs.authToken
+            uid: 0,
+            sid: this.sid,
+            token: this.nodejs.authToken
         };
         $.post(this.settings.url.activate, sendData);
     };
 
     Chat.prototype.remoteActivateWindow = function (uid) {
         var sendData = {
-            uid:uid,
-            sid:this.sid,
-            token:this.nodejs.authToken
+            uid: uid,
+            sid: this.sid,
+            token: this.nodejs.authToken
         };
         $.post(this.settings.url.activate, sendData);
     };
 
     Chat.prototype.remoteCloseWindow = function (uid) {
         var sendData = {
-            uid:uid,
-            sid:this.sid,
-            token:this.nodejs.authToken
+            uid: uid,
+            sid: this.sid,
+            token: this.nodejs.authToken
         };
         $.post(this.settings.url.close, sendData);
     };
 
     Chat.prototype.remoteSendMessage = function (uid, messageText) {
         var sendData = {
-            uid:uid,
-            message:messageText,
-            sid:this.sid,
-            token:this.nodejs.authToken
+            uid: uid,
+            message: messageText,
+            sid: this.sid,
+            token: this.nodejs.authToken
         };
         $.post(this.settings.url.send, sendData);
     };

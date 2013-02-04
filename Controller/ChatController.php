@@ -2,10 +2,10 @@
 
 namespace Briareos\ChatBundle\Controller;
 
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpFoundation\Response;
 use Briareos\NodejsBundle\Nodejs\Message;
 use Briareos\NodejsBundle\Entity\NodejsPresence;
 use Briareos\ChatBundle\Entity\ChatSubjectInterface;
@@ -199,8 +199,7 @@ class ChatController
             $this->em->flush($chatState);
         }
 
-        $response = new Response(json_encode($chatData));
-        $response->headers->set('Content-Type', 'application/json');
+        $response = new JsonResponse($chatData);
 
         return $response;
     }
@@ -221,7 +220,7 @@ class ChatController
 
         $partnerId = $request->request->getInt('uid');
 
-        $sid = $request->request->getAlnum('sid', '');
+        $sid = $request->request->get('sid', '');
 
         if (empty($sid) || !is_string($sid)) {
             throw new HttpException(400, 'Parameter "sid" (socket ID) is required and must be a string.');
@@ -292,8 +291,7 @@ class ChatController
         $activateMessage->setData($messageData);
         $this->dispatcher->dispatch($activateMessage);
 
-        $response = new Response();
-        $response->headers->set('Content-Type', 'application/json');
+        $response = new JsonResponse();
 
         return $response;
     }
@@ -312,7 +310,7 @@ class ChatController
         /** @var $subject ChatSubjectInterface */
         $subject = $this->getSubject($request);
 
-        $sid = $request->request->getAlnum('sid', '');
+        $sid = $request->request->get('sid', '');
 
         if (empty($sid) || !is_string($sid)) {
             throw new HttpException(400, 'Parameter "sid" (socket ID) is required and must be a string.');
@@ -381,10 +379,9 @@ class ChatController
             $chatState->setActiveConversation(null);
         }
         $chatState->removeOpenConversation($partner->getId());
-        $em->flush($chatState);
+        $this->em->flush($chatState);
 
-        $response = new Response();
-        $response->headers->set('Content-Type', 'application/json');
+        $response = new JsonResponse();
 
         return $response;
     }
@@ -401,8 +398,7 @@ class ChatController
      */
     public function pingAction()
     {
-        $response = new Response();
-        $response->headers->set('Content-Type', 'application/json');
+        $response = new JsonResponse();
 
         return $response;
     }
@@ -421,7 +417,7 @@ class ChatController
         /** @var $subject ChatSubjectInterface */
         $subject = $this->getSubject($request);
 
-        $sid = $request->request->getAlnum('sid', '');
+        $sid = $request->request->get('sid', '');
 
         if (empty($sid) || !is_string($sid)) {
             throw new HttpException(400, 'Parameter "sid" (socket ID) is required and must be a string.');
@@ -495,7 +491,7 @@ class ChatController
         $nodejsMessageToReceiver->setChannel($this->getSubjectChannel($partner));
         $this->dispatcher->dispatch($nodejsMessageToReceiver);
 
-        return new Response();
+        return new JsonResponse();
     }
 
     public function generatePresentSubjects(array $subjects)
